@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -21,28 +21,146 @@
       body {
         -webkit-tap-highlight-color: transparent;
         font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, #0c0a1f 0%, #1a1335 25%, #2d1b69 50%, #1a1335 75%, #0c0a1f 100%);
+        min-height: 100vh;
       }
-      .card {
-        box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
-        border-radius: 1.25rem;
-        backdrop-filter: blur(18px);
-        border: 1px solid rgba(148, 163, 184, 0.15);
+      
+      .glass-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(30, 41, 59, 0.3) 100%);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 1.5rem;
+        box-shadow: 
+          0 20px 60px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.05),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
       }
-      .sticky-toggle {
-        position: sticky;
-        top: 0;
-        z-index: 30;
-        background: transparent;
-      }
-      .glow {
+      
+      .glass-card::before {
+        content: '';
         position: absolute;
-        filter: blur(120px);
-        opacity: 0.4;
-        z-index: -1;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      }
+      
+      .neon-glow {
+        filter: drop-shadow(0 0 15px currentColor);
+      }
+      
+      .animated-bg {
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background-size: 400% 400%;
+        animation: gradientShift 8s ease infinite;
+      }
+      
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
+      .floating {
+        animation: float 6s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      
+      .pulse-glow {
+        animation: pulseGlow 2s infinite;
+      }
+      
+      @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+      }
+      
+      .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      }
+      
+      .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .champion-gradient {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+      }
+      
+      .dod-gradient {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+      }
+      
+      .mom-gradient {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      }
+      
+      .result-bar {
+        background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .result-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shine 2s infinite;
+      }
+      
+      @keyframes shine {
+        0% { left: -100%; }
+        100% { left: 100%; }
+      }
+      
+      .neon-border {
+        position: relative;
+        border: 2px solid transparent;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9)) padding-box,
+                    linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c) border-box;
+      }
+      
+      .magical-hover {
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .magical-hover::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .magical-hover:hover::before {
+        left: 100%;
       }
     </style>
   </head>
-  <body class="min-h-screen bg-slate-950 text-slate-100">
+  <body class="min-h-screen text-slate-100">
     <div id="root"></div>
     <script type="text/babel">
       const { useEffect, useState } = React;
@@ -61,22 +179,24 @@
 
       function Toggle({ view, setView }) {
         return (
-          <div className="sticky-toggle px-4 pt-5">
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900/60 rounded-3xl border border-slate-700/60">
-              {["Vote", "Results"].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={
-                    (view === v
-                      ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-slate-900 shadow-lg"
-                      : "bg-transparent text-slate-300 hover:text-white") +
-                    " py-2.5 rounded-3xl font-semibold transition focus:outline-none"
-                  }
-                >
-                  {v}
-                </button>
-              ))}
+          <div className="sticky top-0 z-30 px-4 pt-6">
+            <div className="glass-card p-1.5">
+              <div className="grid grid-cols-2 gap-1">
+                {["Vote", "Results"].map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={
+                      (view === v
+                        ? "animated-bg text-white shadow-2xl scale-105 neon-glow"
+                        : "bg-transparent text-slate-300 hover:text-white hover:bg-slate-800/50") +
+                      " py-3 px-6 rounded-xl font-bold text-sm transition-all duration-300 magical-hover"
+                    }
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -98,7 +218,6 @@
         const [msg, setMsg] = useState("");
         const [results, setResults] = useState(null);
 
-        // Load current results to show existing votes
         useEffect(() => {
           fetch(`/api/games/${game._id}/results`)
             .then((r) => r.json())
@@ -118,7 +237,7 @@
           setMsg("");
           
           if (!voter) {
-            setMsg("Please identify yourself from the dropdown");
+            setMsg("🚫 Please identify yourself from the dropdown");
             return;
           }
 
@@ -128,7 +247,7 @@
             results?.champagneMoments?.find(cm => cm._id === champagneExisting)?.text || "";
 
           if (!momPlayerName || !dodPlayerName || !champagneText) {
-            setMsg("Please complete all votes");
+            setMsg("⚠️ Please complete all votes");
             return;
           }
 
@@ -149,42 +268,51 @@
           
           const json = await res.json();
           if (!res.ok) {
-            setMsg(json.error || "Error submitting vote");
+            setMsg("❌ " + (json.error || "Error submitting vote"));
           } else {
-            setMsg("✅ Vote saved!");
-            setTimeout(() => onDone(), 1500);
+            setMsg("🎉 Vote successfully submitted!");
+            setTimeout(() => onDone(), 2000);
           }
         }
 
         return (
-          <div className="card bg-slate-900/80 p-6">
-            <div className="mb-6 flex items-start justify-between gap-3">
+          <div className="glass-card p-8 hover-lift">
+            <div className="mb-8 flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/80">Vote Now</p>
-                <h2 className="text-2xl font-semibold leading-tight">
-                  {game.teamName || "Hockey Team"}
-                </h2>
-                <p className="text-sm text-slate-300">
-                  {game.date} · vs {game.opponents}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-full champion-gradient flex items-center justify-center text-2xl animate-pulse">
+                    🏒
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-emerald-400 font-bold">Vote Now</p>
+                    <h2 className="text-3xl font-black leading-tight gradient-text">
+                      {game.teamName || "Hockey Team"}
+                    </h2>
+                  </div>
+                </div>
+                <p className="text-slate-300 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                  {game.date} • vs {game.opponents}
                 </p>
               </div>
-              <div className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-200">
-                Secure ballot
+              <div className="neon-border rounded-full px-4 py-2">
+                <span className="text-xs font-bold text-emerald-300 neon-glow">🔒 Secure</span>
               </div>
             </div>
 
             {/* Voter Identification */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+            <div className="mb-8 neon-border rounded-2xl p-6">
+              <label className="block text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
                 Identify Yourself *
               </label>
               <select
                 value={voter}
                 onChange={(e) => setVoter(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                className="w-full rounded-xl border-2 border-emerald-500/30 bg-slate-900/90 p-4 text-white font-medium shadow-2xl focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/40 transition-all duration-300"
                 required
               >
-                <option value="">Select your name</option>
+                <option value="">🎯 Select your name</option>
                 {game.teamSheet.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
@@ -192,58 +320,59 @@
             </div>
 
             {/* Man of the Match */}
-            <div className="mb-6 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300/80 mb-3">
+            <div className="mb-8 glass-card p-6 border-emerald-500/20">
+              <h3 className="text-lg font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-3">
+                <span className="w-8 h-8 mom-gradient rounded-full flex items-center justify-center text-lg">👑</span>
                 Man of the Match
               </h3>
               
-              <div className="space-y-3">
-                <label className="flex items-center gap-3">
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 transition-all cursor-pointer magical-hover">
                   <input
                     type="radio"
                     name="momType"
                     value="existing"
                     checked={momVote === "existing"}
                     onChange={(e) => setMomVote(e.target.value)}
-                    className="accent-emerald-400"
+                    className="w-5 h-5 accent-emerald-400"
                   />
-                  <span className="text-slate-200">Vote for existing nominee</span>
+                  <span className="text-slate-200 font-medium">Vote for existing nominee</span>
                 </label>
                 
                 {momVote === "existing" && (
                   <select
                     value={momPlayer}
                     onChange={(e) => setMomPlayer(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    className="w-full rounded-xl border-2 border-emerald-500/30 bg-slate-900/90 p-4 text-white font-medium"
                   >
                     <option value="">Select player</option>
                     {results?.totals?.mom?.map((m) => (
                       <option key={m.player} value={m.player}>
-                        {m.player} ({m.count} vote{m.count !== 1 ? 's' : ''})
+                        👑 {m.player} ({m.count} vote{m.count !== 1 ? 's' : ''})
                       </option>
                     ))}
                   </select>
                 )}
 
-                <label className="flex items-center gap-3">
+                <label className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 transition-all cursor-pointer magical-hover">
                   <input
                     type="radio"
                     name="momType"
                     value="new"
                     checked={momVote === "new"}
                     onChange={(e) => setMomVote(e.target.value)}
-                    className="accent-emerald-400"
+                    className="w-5 h-5 accent-emerald-400"
                   />
-                  <span className="text-slate-200">Nominate new player</span>
+                  <span className="text-slate-200 font-medium">Nominate new player</span>
                 </label>
                 
                 {momVote === "new" && (
                   <select
                     value={momNewPlayer}
                     onChange={(e) => setMomNewPlayer(e.target.value)}
-                    className="w-full rounded-xl border border-emerald-400/40 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    className="w-full rounded-xl border-2 border-emerald-400/60 bg-slate-900/90 p-4 text-white font-medium pulse-glow"
                   >
-                    <option value="">Select player to nominate</option>
+                    <option value="">⭐ Select player to nominate</option>
                     {availableForMom.map((p) => (
                       <option key={p} value={p}>{p}</option>
                     ))}
@@ -251,67 +380,68 @@
                 )}
                 
                 <input
-                  placeholder="Comment (optional)"
+                  placeholder="💬 Comment (optional)"
                   value={momComment}
                   onChange={(e) => setMomComment(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  className="w-full rounded-xl border-2 border-slate-600/40 bg-slate-900/70 p-4 text-white placeholder-slate-400 font-medium"
                 />
               </div>
             </div>
 
             {/* Dick of the Day */}
-            <div className="mb-6 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-300/80 mb-3">
+            <div className="mb-8 glass-card p-6 border-rose-500/20">
+              <h3 className="text-lg font-black uppercase tracking-[0.2em] text-rose-400 mb-4 flex items-center gap-3">
+                <span className="w-8 h-8 dod-gradient rounded-full flex items-center justify-center text-lg">💩</span>
                 Dick of the Day
               </h3>
               
-              <div className="space-y-3">
-                <label className="flex items-center gap-3">
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 transition-all cursor-pointer magical-hover">
                   <input
                     type="radio"
                     name="dodType"
                     value="existing"
                     checked={dodVote === "existing"}
                     onChange={(e) => setDodVote(e.target.value)}
-                    className="accent-emerald-400"
+                    className="w-5 h-5 accent-rose-400"
                   />
-                  <span className="text-slate-200">Vote for existing nominee</span>
+                  <span className="text-slate-200 font-medium">Vote for existing nominee</span>
                 </label>
                 
                 {dodVote === "existing" && (
                   <select
                     value={dodPlayer}
                     onChange={(e) => setDodPlayer(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    className="w-full rounded-xl border-2 border-rose-500/30 bg-slate-900/90 p-4 text-white font-medium"
                   >
                     <option value="">Select player</option>
                     {results?.totals?.dod?.map((d) => (
                       <option key={d.player} value={d.player}>
-                        {d.player} ({d.count} vote{d.count !== 1 ? 's' : ''})
+                        💩 {d.player} ({d.count} vote{d.count !== 1 ? 's' : ''})
                       </option>
                     ))}
                   </select>
                 )}
 
-                <label className="flex items-center gap-3">
+                <label className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 transition-all cursor-pointer magical-hover">
                   <input
                     type="radio"
                     name="dodType"
                     value="new"
                     checked={dodVote === "new"}
                     onChange={(e) => setDodVote(e.target.value)}
-                    className="accent-emerald-400"
+                    className="w-5 h-5 accent-rose-400"
                   />
-                  <span className="text-slate-200">Nominate new player</span>
+                  <span className="text-slate-200 font-medium">Nominate new player</span>
                 </label>
                 
                 {dodVote === "new" && (
                   <select
                     value={dodNewPlayer}
                     onChange={(e) => setDodNewPlayer(e.target.value)}
-                    className="w-full rounded-xl border border-emerald-400/40 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    className="w-full rounded-xl border-2 border-rose-400/60 bg-slate-900/90 p-4 text-white font-medium"
                   >
-                    <option value="">Select player to nominate</option>
+                    <option value="">🎯 Select player to nominate</option>
                     {availableForDod.map((p) => (
                       <option key={p} value={p}>{p}</option>
                     ))}
@@ -319,24 +449,25 @@
                 )}
                 
                 <input
-                  placeholder="Comment (optional)"
+                  placeholder="💬 Comment (optional)"
                   value={dodComment}
                   onChange={(e) => setDodComment(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  className="w-full rounded-xl border-2 border-slate-600/40 bg-slate-900/70 p-4 text-white placeholder-slate-400 font-medium"
                 />
               </div>
             </div>
 
             {/* Champagne Moment */}
-            <div className="mb-6 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300/80 mb-3">
-                🥂 Champagne Moment
+            <div className="mb-8 glass-card p-6 border-amber-500/20">
+              <h3 className="text-lg font-black uppercase tracking-[0.2em] text-amber-400 mb-4 flex items-center gap-3">
+                <span className="w-8 h-8 champion-gradient rounded-full flex items-center justify-center text-lg floating">🥂</span>
+                Champagne Moment
               </h3>
               
               {results?.champagneMoments?.length > 0 && (
-                <div className="mb-3">
+                <div className="mb-4 space-y-3">
                   {results.champagneMoments.map((cm) => (
-                    <label key={cm._id} className="mt-2 flex items-start gap-3 rounded-xl border border-transparent bg-slate-900/70 p-3 text-sm transition hover:border-emerald-400/40">
+                    <label key={cm._id} className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/70 hover:bg-slate-700/70 transition-all cursor-pointer magical-hover border border-amber-500/20">
                       <input
                         type="radio"
                         name="champagne"
@@ -346,12 +477,12 @@
                           setChampagneMoment(e.target.value);
                           setChampagneExisting(e.target.value);
                         }}
-                        className="mt-1 accent-emerald-400"
+                        className="mt-1 w-5 h-5 accent-amber-400"
                       />
-                      <div>
-                        <span className="text-slate-200">{cm.text}</span>
-                        <div className="text-xs text-slate-400 mt-1">
-                          {cm.votes} vote{cm.votes !== 1 ? 's' : ''}
+                      <div className="flex-1">
+                        <span className="text-slate-200 font-medium">{cm.text}</span>
+                        <div className="text-xs text-amber-400 mt-1 font-bold">
+                          🥂 {cm.votes} vote{cm.votes !== 1 ? 's' : ''}
                         </div>
                       </div>
                     </label>
@@ -359,43 +490,44 @@
                 </div>
               )}
               
-              <label className="flex items-start gap-3 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/40 p-3 text-sm transition hover:border-emerald-400/50">
+              <label className="flex items-start gap-3 p-4 rounded-xl border-2 border-dashed border-amber-500/40 bg-slate-800/40 hover:bg-slate-700/40 transition-all cursor-pointer magical-hover">
                 <input
                   type="radio"
                   name="champagne"
                   value="new"
                   checked={champagneMoment === "new"}
                   onChange={(e) => setChampagneMoment(e.target.value)}
-                  className="mt-1 accent-emerald-400"
+                  className="mt-1 w-5 h-5 accent-amber-400"
                 />
-                <span className="text-slate-200">Add new champagne moment</span>
+                <span className="text-slate-200 font-medium">✨ Add new champagne moment</span>
               </label>
               
               {champagneMoment === "new" && (
                 <textarea
-                  placeholder="Describe the champagne moment (up to 100 characters)"
+                  placeholder="🥂 Describe the magical moment that deserves champagne (up to 100 characters)"
                   value={champagneNew}
                   onChange={(e) => setChampagneNew(e.target.value)}
                   maxLength={100}
-                  className="mt-3 w-full rounded-xl border border-amber-400/40 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                  className="mt-4 w-full rounded-xl border-2 border-amber-400/60 bg-slate-900/90 p-4 text-white placeholder-slate-400 font-medium pulse-glow"
                   rows={3}
                 />
               )}
             </div>
 
             {msg && (
-              <p className={`mb-4 text-sm font-medium ${
-                msg.includes("✅") ? "text-emerald-300" : "text-rose-400"
+              <div className={`mb-6 p-4 rounded-xl font-bold text-center ${
+                msg.includes("🎉") ? "bg-emerald-500/20 text-emerald-300 border-2 border-emerald-500/40" : 
+                "bg-rose-500/20 text-rose-300 border-2 border-rose-500/40"
               }`}>
                 {msg}
-              </p>
+              </div>
             )}
             
             <button
               onClick={submit}
-              className="w-full rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:brightness-105"
+              className="w-full py-4 rounded-xl animated-bg text-white font-black text-lg shadow-2xl hover:scale-105 transition-all duration-300 neon-glow"
             >
-              Submit Vote
+              🚀 Submit Vote
             </button>
           </div>
         );
@@ -413,113 +545,129 @@
         
         if (!data) {
           return (
-            <div className="card bg-slate-900/80 p-6 text-sm text-slate-200">
-              Loading results...
+            <div className="glass-card p-8 text-center">
+              <div className="animated-bg w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <p className="text-slate-200 font-medium">Loading magical results...</p>
             </div>
           );
         }
 
         return (
-          <div className="card bg-slate-900/80 p-6">
-            <div className="mb-6 flex items-center justify-between">
+          <div className="glass-card p-8 hover-lift">
+            <div className="mb-8 flex items-center justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/80">
-                  Live Results
-                </p>
-                <h2 className="text-2xl font-semibold">Standings</h2>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 rounded-full champion-gradient flex items-center justify-center text-2xl floating">
+                    📊
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-emerald-400 font-bold">Live Results</p>
+                    <h2 className="text-3xl font-black gradient-text">Match Standings</h2>
+                  </div>
+                </div>
               </div>
-              <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-                {data.game.date}
-              </span>
+              <div className="neon-border rounded-full px-4 py-2">
+                <span className="text-xs font-bold text-emerald-300">{data.game.date}</span>
+              </div>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Man of the Match Results */}
-              <div>
-                <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-300/80 mb-3">
+              <div className="glass-card p-6 border-emerald-500/20">
+                <h3 className="text-lg font-black uppercase tracking-[0.25em] text-emerald-400 mb-4 flex items-center gap-3">
+                  <span className="w-8 h-8 mom-gradient rounded-full flex items-center justify-center">👑</span>
                   Man of the Match
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {data.totals?.mom?.length ? (
                     data.totals.mom.map((m, idx) => {
                       const highest = Math.max(1, ...data.totals.mom.map(t => t.count));
+                      const percentage = (m.count / highest) * 100;
                       return (
-                        <div key={m.player + idx} className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60">
-                          <div className="flex items-center justify-between px-3 py-2 text-sm">
-                            <span className="font-medium text-slate-200">{m.player}</span>
-                            <span className="text-xs text-slate-300">
+                        <div key={m.player + idx} className="neon-border rounded-xl overflow-hidden hover-lift">
+                          <div className="flex items-center justify-between p-4 bg-slate-900/60">
+                            <span className="font-bold text-white text-lg">👑 {m.player}</span>
+                            <span className="text-emerald-400 font-black">
                               {m.count} vote{m.count === 1 ? "" : "s"}
                             </span>
                           </div>
-                          <div className="h-1.5 bg-slate-800">
+                          <div className="h-3 bg-slate-800 relative overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-emerald-400 to-green-500"
-                              style={{ width: `${Math.max((m.count / highest) * 100, 8)}%` }}
+                              className="h-full result-bar text-emerald-400"
+                              style={{ width: `${Math.max(percentage, 10)}%` }}
                             ></div>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <p className="text-xs text-slate-400">No votes yet.</p>
+                    <p className="text-slate-400 text-center py-8 font-medium">🏒 No votes yet - be the first!</p>
                   )}
                 </div>
               </div>
 
               {/* Dick of the Day Results */}
-              <div>
-                <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-rose-300/80 mb-3">
+              <div className="glass-card p-6 border-rose-500/20">
+                <h3 className="text-lg font-black uppercase tracking-[0.25em] text-rose-400 mb-4 flex items-center gap-3">
+                  <span className="w-8 h-8 dod-gradient rounded-full flex items-center justify-center">💩</span>
                   Dick of the Day
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {data.totals?.dod?.length ? (
                     data.totals.dod.map((d, idx) => {
                       const highest = Math.max(1, ...data.totals.dod.map(t => t.count));
+                      const percentage = (d.count / highest) * 100;
                       return (
-                        <div key={d.player + idx} className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60">
-                          <div className="flex items-center justify-between px-3 py-2 text-sm">
-                            <span className="font-medium text-slate-200">{d.player}</span>
-                            <span className="text-xs text-slate-300">
+                        <div key={d.player + idx} className="neon-border rounded-xl overflow-hidden hover-lift">
+                          <div className="flex items-center justify-between p-4 bg-slate-900/60">
+                            <span className="font-bold text-white text-lg">💩 {d.player}</span>
+                            <span className="text-rose-400 font-black">
                               {d.count} vote{d.count === 1 ? "" : "s"}
                             </span>
                           </div>
-                          <div className="h-1.5 bg-slate-800">
+                          <div className="h-3 bg-slate-800 relative overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-rose-400 to-red-500"
-                              style={{ width: `${Math.max((d.count / highest) * 100, 8)}%` }}
+                              className="h-full result-bar text-rose-400"
+                              style={{ width: `${Math.max(percentage, 10)}%` }}
                             ></div>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <p className="text-xs text-slate-400">No votes yet.</p>
+                    <p className="text-slate-400 text-center py-8 font-medium">🎯 No nominations yet!</p>
                   )}
                 </div>
               </div>
 
               {/* Champagne Moments Results */}
-              <div>
-                <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-300/80 mb-3">
-                  🥂 Champagne Moments
+              <div className="glass-card p-6 border-amber-500/20">
+                <h3 className="text-lg font-black uppercase tracking-[0.25em] text-amber-400 mb-4 flex items-center gap-3">
+                  <span className="w-8 h-8 champion-gradient rounded-full flex items-center justify-center floating">🥂</span>
+                  Champagne Moments
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {data.champagneMoments?.length ? (
                     data.champagneMoments.map((cm, idx) => {
                       const highest = Math.max(1, ...data.champagneMoments.map(c => c.votes));
+                      const percentage = (cm.votes / highest) * 100;
                       return (
-                        <div key={cm._id || idx} className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60">
-                          <div className="px-3 py-3">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <span className="text-sm text-slate-200 leading-relaxed">{cm.text}</span>
-                              <span className="text-xs text-slate-300 whitespace-nowrap">
+                        <div key={cm._id || idx} className="neon-border rounded-xl overflow-hidden hover-lift">
+                          <div className="p-5 bg-slate-900/60">
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <span className="text-white font-medium leading-relaxed flex-1">
+                                🥂 {cm.text}
+                              </span>
+                              <span className="text-amber-400 font-black whitespace-nowrap">
                                 {cm.votes} vote{cm.votes === 1 ? "" : "s"}
                               </span>
                             </div>
-                            <div className="h-1.5 bg-slate-800 rounded-full">
+                            <div className="h-3 bg-slate-800 rounded-full relative overflow-hidden">
                               <div
-                                className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full"
-                                style={{ width: `${Math.max((cm.votes / highest) * 100, 8)}%` }}
+                                className="h-full result-bar text-amber-400 rounded-full"
+                                style={{ width: `${Math.max(percentage, 10)}%` }}
                               ></div>
                             </div>
                           </div>
@@ -527,7 +675,7 @@
                       );
                     })
                   ) : (
-                    <p className="text-xs text-slate-400">No champagne moments yet.</p>
+                    <p className="text-slate-400 text-center py-8 font-medium">🥂 No magical moments captured yet!</p>
                   )}
                 </div>
               </div>
@@ -557,7 +705,12 @@
         if (loading) {
           return (
             <div className="flex min-h-screen items-center justify-center">
-              <div className="text-slate-300">Loading match...</div>
+              <div className="text-center">
+                <div className="animated-bg w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl floating">
+                  🏒
+                </div>
+                <p className="text-white font-bold text-xl">Loading your match...</p>
+              </div>
             </div>
           );
         }
@@ -565,8 +718,11 @@
         if (!game) {
           return (
             <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-2xl font-semibold text-slate-200 mb-2">Match Not Found</h1>
+              <div className="text-center glass-card p-8">
+                <div className="w-16 h-16 bg-red-500/20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                  ⚠️
+                </div>
+                <h1 className="text-2xl font-black text-white mb-3">Match Not Found</h1>
                 <p className="text-slate-400">Please check your link and try again.</p>
               </div>
             </div>
@@ -574,31 +730,48 @@
         }
 
         return (
-          <div className="relative overflow-hidden">
-            <div className="glow left-[-10%] top-[-10%] h-80 w-80 rounded-full bg-emerald-500"></div>
-            <div className="glow right-[-15%] bottom-[-10%] h-96 w-96 rounded-full bg-blue-500"></div>
-            <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-5 px-4 pb-12 pt-10">
-              <header className="text-center">
-                <p className="text-xs uppercase tracking-[0.4em] text-emerald-200/70">
-                  Guildford Hockey Club
-                </p>
-                <h1 className="mt-2 text-4xl font-semibold">
-                  Matchday Player Voting
-                </h1>
-                <p className="mt-3 text-sm text-slate-300">
-                  Vote for Man of the Match, Dick of the Day, and Champagne Moments
+          <div className="relative min-h-screen overflow-hidden">
+            {/* Background Effects */}
+            <div className="fixed inset-0 pointer-events-none">
+              <div className="absolute top-[-20%] left-[-20%] w-96 h-96 rounded-full bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-3xl floating"></div>
+              <div className="absolute bottom-[-20%] right-[-20%] w-96 h-96 rounded-full bg-gradient-to-r from-blue-600/30 to-cyan-600/30 blur-3xl floating" style={{animationDelay: '-3s'}}></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-gradient-to-r from-emerald-600/20 to-teal-600/20 blur-3xl floating" style={{animationDelay: '-1.5s'}}></div>
+            </div>
+            
+            <div className="relative z-10 mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 pb-12 pt-8">
+              <header className="text-center mb-4">
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <div className="w-16 h-16 champion-gradient rounded-full flex items-center justify-center text-3xl floating">
+                    🏒
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.4em] text-emerald-400/80 font-bold">
+                      Guildford Hockey Club
+                    </p>
+                    <h1 className="text-5xl font-black gradient-text leading-tight">
+                      Matchday Voting
+                    </h1>
+                  </div>
+                </div>
+                <p className="text-lg text-slate-300 font-medium">
+                  Cast your votes for MoM, DoD, and Champagne Moments ✨
                 </p>
               </header>
+              
               <Toggle view={view} setView={setView} />
-              <div className="space-y-5">
+              
+              <div className="space-y-6">
                 {view === "Vote" ? (
                   <VoteForm game={game} onDone={() => setView("Results")} />
                 ) : (
                   <Results game={game} />
                 )}
               </div>
-              <footer className="pt-4 text-center text-xs text-slate-500">
-                Built for modern club culture · Secure · Mobile ready
+              
+              <footer className="pt-8 text-center">
+                <p className="text-xs text-slate-500 font-medium">
+                  Built for modern club culture • Secure • Mobile ready ⚡
+                </p>
               </footer>
             </div>
           </div>

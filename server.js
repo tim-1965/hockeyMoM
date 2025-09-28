@@ -17,7 +17,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
 
 await mongoose.connect(process.env.MONGO_URI, { dbName: "hockey" });
 
-const StandoutEvent = new mongoose.Schema({ text: String }, { _id: true });
+const ChampagneMoment = new mongoose.Schema({ text: String }, { _id: true });
 const Game = mongoose.model(
   "Game",
   new mongoose.Schema({
@@ -26,9 +26,10 @@ const Game = mongoose.model(
     teamName: { type: String, default: "Weysiders" },
     clubName: { type: String, default: "Guildford Hockey Club" },
     teamSheet: [String],
-    standoutEvents: [StandoutEvent],
+    champagneMoments: [ChampagneMoment],
   })
 );
+
 const Vote = mongoose.model(
   "Vote",
   new mongoose.Schema({
@@ -36,21 +37,21 @@ const Vote = mongoose.model(
     voter: { name: String, token: String },
     mom: { player: String, comment: String },
     dod: { player: String, comment: String },
-    standout: { eventId: mongoose.Types.ObjectId, textIfNew: String },
+    champagneMoment: { eventId: mongoose.Types.ObjectId, textIfNew: String },
   })
 );
 
 app.get("/api/health", (_, r) => r.json({ ok: true }));
 
 app.post("/api/games", async (req, res) => {
-  const { date, opponents, teamSheet = [], standoutEvents = [] } = req.body;
+  const { date, opponents, teamSheet = [], champagneMoments = [] } = req.body;
   if (!date || !opponents || !teamSheet.length)
     return res.status(400).json({ error: "Missing fields" });
   const game = await Game.create({
     date,
     opponents,
     teamSheet,
-    standoutEvents: standoutEvents.map((t) => ({ text: t })),
+    champagneMoments: champagneMoments.map((t) => ({ text: t })),
   });
   res.json(game);
 });
@@ -65,6 +66,16 @@ app.post("/api/games/:id/votes", async (req, res) => {
   try {
     const g = await Game.findById(req.params.id);
     if (!g) return res.status(404).json({ error: "Game not found" });
+
+    // Handle new champagne moment
+    if (req.body.champagneMoment?.textIfNew) {
+      const newMoment = { text: req.body.champagneMoment.textIfNew };
+      g.champagneMoments.push(newMoment);
+      await g.save();
+      req.body.champagneMoment.eventId = g.champagneMoments[g.champagneMoments.length - 1]._id;
+      delete req.body.champagneMoment.textIfNew;
+    }
+
     const v = await Vote.create({ ...req.body, gameId: g._id });
     res.json(v);
   } catch (e) {
@@ -77,11 +88,34 @@ app.post("/api/games/:id/votes", async (req, res) => {
 app.get("/api/games/:id/results", async (req, res) => {
   const g = await Game.findById(req.params.id);
   const votes = await Vote.find({ gameId: g._id });
-  const tally = (f) =>
+  
+  const tally = (field) =>
     Object.entries(
-      votes.reduce((m, v) => ((m[v[f].player] = (m[v[f].player] || 0) + 1), m), {})
-    ).map(([player, count]) => ({ player, count }));
-  res.json({ game: g, totals: { mom: tally("mom"), dod: tally("dod") } });
+      votes.reduce((m, v) => ((m[v[field].player] = (m[v[field].player] || 0) + 1), m), {})
+    )
+    .map(([player, count]) => ({ player, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Tally champagne moments
+  const champagneTally = {};
+  votes.forEach(v => {
+    if (v.champagneMoment?.eventId) {
+      const eventId = v.champagneMoment.eventId.toString();
+      champagneTally[eventId] = (champagneTally[eventId] || 0) + 1;
+    }
+  });
+
+  const champagneMoments = g.champagneMoments.map(cm => ({
+    _id: cm._id,
+    text: cm.text,
+    votes: champagneTally[cm._id.toString()] || 0
+  })).sort((a, b) => b.votes - a.votes);
+
+  res.json({ 
+    game: g, 
+    totals: { mom: tally("mom"), dod: tally("dod") },
+    champagneMoments
+  });
 });
 
 app.use(express.static(path.join(__dirname, "public")));
