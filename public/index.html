@@ -1,295 +1,342 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hockey Match Voting</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    body { -webkit-tap-highlight-color: transparent; }
-    .card { box-shadow: 0 6px 24px rgba(0,0,0,0.08); border-radius: 1rem; }
-    .sticky-toggle { position: sticky; top: 0; z-index: 30; background: white; }
-  </style>
-</head>
-<body class="bg-slate-50 min-h-screen">
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useEffect, useState } = React;
-    const API_BASE = ""; // same-origin
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hockey Match Voting</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        -webkit-tap-highlight-color: transparent;
+      }
+      .card {
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+        border-radius: 1rem;
+      }
+      .sticky-toggle {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: white;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 min-h-screen">
+    <div id="root"></div>
 
-    // helpers
-    const qs = new URLSearchParams(location.search);
-    function token(){ let t=localStorage.getItem('hockey_vote_token'); if(!t){t=crypto.randomUUID(); localStorage.setItem('hockey_vote_token', t);} return t; }
-    const deviceToken = token();
+    <script type="text/babel">
+      const { useEffect, useState } = React;
+      const qs = new URLSearchParams(location.search);
+      const tokenKey = "hockey_vote_token";
+      function getToken() {
+        let t = localStorage.getItem(tokenKey);
+        if (!t) {
+          t = crypto.randomUUID();
+          localStorage.setItem(tokenKey, t);
+        }
+        return t;
+      }
+      const deviceToken = getToken();
 
-    function Toggle({ view, setView }){
-      return (
-        <div className="sticky-toggle px-3 pt-3">
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-200 rounded-2xl">
-            {['Vote','Results'].map(v => (
-              <button key={v} onClick={()=>setView(v)} className={(view===v?'bg-white':'bg-transparent text-slate-600') + ' py-2 rounded-2xl font-medium transition'}>{v}</button>
-            ))}
+      function Toggle({ view, setView }) {
+        return (
+          <div className="sticky-toggle px-3 pt-3">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-200 rounded-2xl">
+              {["Vote", "Results"].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={
+                    (view === v
+                      ? "bg-white"
+                      : "bg-transparent text-slate-600") +
+                    " py-2 rounded-2xl font-medium transition"
+                  }
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      );
-    }
+        );
+      }
 
-    function Organizer({ onCreated }){
-      const [date, setDate] = useState(new Date().toISOString().slice(0,10));
-      const [opponents, setOpponents] = useState('');
-      const [teamName, setTeamName] = useState('Weysiders');
-      const [clubName, setClubName] = useState('Guildford Hockey Club');
-      const [teamSheet, setTeamSheet] = useState('');
-      const [standouts, setStandouts] = useState('');
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState('');
+      function Organizer({ onCreated }) {
+        const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+        const [opponents, setOpponents] = useState("");
+        const [teamName, setTeamName] = useState("Weysiders");
+        const [clubName, setClubName] = useState("Guildford Hockey Club");
+        const [teamSheet, setTeamSheet] = useState("");
+        const [standouts, setStandouts] = useState("");
+        const [error, setError] = useState("");
+        const [loading, setLoading] = useState(false);
 
-      const create = async () => {
-        setError('');
-        const sheet = teamSheet.split(/\n|,/).map(s=>s.trim()).filter(Boolean);
-        const evs = standouts.split(/\n/).map(s=>s.trim()).filter(Boolean);
-        if (!date || !opponents || sheet.length===0) { setError('Date, opponents and team sheet are required.'); return; }
-        setLoading(true);
-        try {
-          const res = await fetch(`/api/games`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ date, opponents, teamName, clubName, teamSheet: sheet, standoutEvents: evs }) });
+        async function createGame() {
+          setError("");
+          const sheet = teamSheet
+            .split(/\n|,/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          if (!date || !opponents || !sheet.length) {
+            setError("Please fill date, opponents, and team sheet.");
+            return;
+          }
+          const standoutEvents = standouts
+            .split(/\n/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          setLoading(true);
+          const res = await fetch("/api/games", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date,
+              opponents,
+              teamName,
+              clubName,
+              teamSheet: sheet,
+              standoutEvents,
+            }),
+          });
           const json = await res.json();
-          if (!res.ok) throw new Error(json.error||'Failed to create game');
-          onCreated(json);
-          const url = new URL(location.href); url.searchParams.set('gameId', json._id); history.replaceState({}, '', url);
-        } catch (e) { setError(e.message); } finally { setLoading(false); }
-      };
+          setLoading(false);
+          if (!res.ok) {
+            setError(json.error || "Failed to create game");
+          } else {
+            onCreated(json);
+            const url = new URL(location.href);
+            url.searchParams.set("gameId", json._id);
+            history.replaceState({}, "", url);
+          }
+        }
 
-      return (
-        <div className="card bg-white p-4">
-          <h2 className="text-xl font-semibold mb-2">Create Game</h2>
-          <div className="grid gap-3">
-            <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm">Date<input value={date} onChange={e=>setDate(e.target.value)} type="date" className="mt-1 w-full border rounded-lg p-2"/></label>
-              <label className="text-sm">Opponents<input value={opponents} onChange={e=>setOpponents(e.target.value)} placeholder="e.g., Woking 2s" className="mt-1 w-full border rounded-lg p-2"/></label>
+        return (
+          <div className="card bg-white p-4">
+            <h2 className="text-xl font-semibold mb-2">Create Game</h2>
+            <div className="grid gap-3">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="border rounded-lg p-2 w-full"
+              />
+              <input
+                placeholder="Opponents"
+                value={opponents}
+                onChange={(e) => setOpponents(e.target.value)}
+                className="border rounded-lg p-2 w-full"
+              />
+              <textarea
+                placeholder="Team sheet (comma or new line separated)"
+                value={teamSheet}
+                onChange={(e) => setTeamSheet(e.target.value)}
+                className="border rounded-lg p-2 w-full h-24"
+              ></textarea>
+              <textarea
+                placeholder="Optional: standout events"
+                value={standouts}
+                onChange={(e) => setStandouts(e.target.value)}
+                className="border rounded-lg p-2 w-full h-20"
+              ></textarea>
+              {error && <p className="text-red-600 text-sm">{error}</p>}
+              <button
+                onClick={createGame}
+                disabled={loading}
+                className="bg-black text-white rounded-xl py-3 font-semibold"
+              >
+                {loading ? "Creating..." : "Create Game"}
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm">Team name<input value={teamName} onChange={e=>setTeamName(e.target.value)} className="mt-1 w-full border rounded-lg p-2"/></label>
-              <label className="text-sm">Club<input value={clubName} onChange={e=>setClubName(e.target.value)} className="mt-1 w-full border rounded-lg p-2"/></label>
-            </div>
-            <label className="text-sm">Team sheet (one per line or comma-separated)
-              <textarea value={teamSheet} onChange={e=>setTeamSheet(e.target.value)} className="mt-1 w-full border rounded-lg p-2 h-24" placeholder="Alice\nBob\nCharlie"></textarea>
-            </label>
-            <label className="text-sm">Seed standout events (optional, one per line)
-              <textarea value={standouts} onChange={e=>setStandouts(e.target.value)} className="mt-1 w-full border rounded-lg p-2 h-20" placeholder="Alice’s reverse-stick screamer"></textarea>
-            </label>
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button disabled={loading} onClick={create} className="bg-black text-white rounded-xl py-3 font-semibold">{loading? 'Creating…':'Create Game'}</button>
           </div>
-        </div>
-      );
-    }
+        );
+      }
 
-    function VoteCard({ game, onVoted }){
-      const [name, setName] = useState('');
-      const [momPlayer, setMomPlayer] = useState('');
-      const [momComment, setMomComment] = useState('');
-      const [dodPlayer, setDodPlayer] = useState('');
-      const [dodComment, setDodComment] = useState('');
-      const [standoutChoice, setStandoutChoice] = useState('');
-      const [standoutText, setStandoutText] = useState('');
-      const [error, setError] = useState('');
-      const [ok, setOk] = useState('');
-      const [busy, setBusy] = useState(false);
+      function VoteForm({ game, onDone }) {
+        const [name, setName] = useState("");
+        const [mom, setMom] = useState("");
+        const [momC, setMomC] = useState("");
+        const [dod, setDod] = useState("");
+        const [dodC, setDodC] = useState("");
+        const [standout, setStandout] = useState(
+          game.standoutEvents[0]?._id || "new"
+        );
+        const [standoutText, setStandoutText] = useState("");
+        const [msg, setMsg] = useState("");
 
-      useEffect(()=>{ if (game?.standoutEvents?.length) setStandoutChoice(game.standoutEvents[0]._id); }, [game?._id]);
-
-      const submit = async () => {
-        setError(''); setOk('');
-        if (!momPlayer || !dodPlayer) { setError('Please select MoM and DoD.'); return; }
-        if (standoutChoice !== 'new' && !standoutChoice) { setError('Please select a standout event or add one.'); return; }
-        setBusy(true);
-        try {
+        async function submit() {
+          setMsg("");
           const payload = {
             voter: { name, token: deviceToken },
-            mom: { player: momPlayer, comment: momComment },
-            dod: { player: dodPlayer, comment: dodComment },
-            standout: standoutChoice === 'new' ? { textIfNew: standoutText } : { eventId: standoutChoice }
+            mom: { player: mom, comment: momC },
+            dod: { player: dod, comment: dodC },
+            standout:
+              standout === "new"
+                ? { textIfNew: standoutText }
+                : { eventId: standout },
           };
-          const res = await fetch(`/api/games/${game._id}/votes`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          const res = await fetch(`/api/games/${game._id}/votes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
           const json = await res.json();
-          if (!res.ok) throw new Error(json.error||'Failed to submit');
-          setOk('Vote recorded!'); onVoted();
-        } catch (e) { setError(e.message); } finally { setBusy(false); }
-      };
+          if (!res.ok) setMsg(json.error || "Error");
+          else {
+            setMsg("✅ Vote saved!");
+            onDone();
+          }
+        }
 
-      return (
-        <div className="card bg-white p-4">
-          <div className="mb-3">
-            <h2 className="text-xl font-semibold">Vote</h2>
-            <p className="text-slate-600 text-sm">{game.teamName} · {game.clubName} · {game.date} vs {game.opponents}</p>
-          </div>
-          <div className="grid gap-3">
-            <label className="text-sm">Your name (optional)
-              <input value={name} onChange={e=>setName(e.target.value)} className="mt-1 w-full border rounded-lg p-2" placeholder="e.g., Sam"/>
-            </label>
-
-            <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm">MoM
-                <select value={momPlayer} onChange={e=>setMomPlayer(e.target.value)} className="mt-1 w-full border rounded-lg p-2">
-                  <option value="">Select player</option>
-                  {game.teamSheet.map(p=> <option key={p} value={p}>{p}</option>)}
-                </select>
-                <input value={momComment} onChange={e=>setMomComment(e.target.value)} className="mt-2 w-full border rounded-lg p-2" placeholder="Why? (optional)"/>
-              </label>
-
-              <label className="text-sm">DoD
-                <select value={dodPlayer} onChange={e=>setDodPlayer(e.target.value)} className="mt-1 w-full border rounded-lg p-2">
-                  <option value="">Select player</option>
-                  {game.teamSheet.map(p=> <option key={p} value={p}>{p}</option>)}
-                </select>
-                <input value={dodComment} onChange={e=>setDodComment(e.target.value)} className="mt-2 w-full border rounded-lg p-2" placeholder="Why? (optional)"/>
-              </label>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">Standout event</p>
-              <div className="grid gap-2">
-                {game.standoutEvents.length === 0 && <p className="text-slate-500 text-sm">No events yet—add one below.</p>}
-                {game.standoutEvents.map(ev => (
-                  <label key={ev._id} className="flex items-center gap-2">
-                    <input type="radio" name="standout" value={ev._id} checked={standoutChoice===ev._id} onChange={()=>setStandoutChoice(ev._id)} />
-                    <span>{ev.text}</span>
-                  </label>
-                ))}
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="standout" value="new" checked={standoutChoice==='new'} onChange={()=>setStandoutChoice('new')} />
-                  <span>Add a new event</span>
+        return (
+          <div className="card bg-white p-4">
+            <h2 className="text-xl font-semibold mb-3">
+              Vote ({game.date} vs {game.opponents})
+            </h2>
+            <input
+              placeholder="Your name (optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border rounded-lg p-2 w-full mb-2"
+            />
+            <select
+              value={mom}
+              onChange={(e) => setMom(e.target.value)}
+              className="border rounded-lg p-2 w-full mb-2"
+            >
+              <option value="">Select MoM</option>
+              {game.teamSheet.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+            <input
+              placeholder="Comment (optional)"
+              value={momC}
+              onChange={(e) => setMomC(e.target.value)}
+              className="border rounded-lg p-2 w-full mb-2"
+            />
+            <select
+              value={dod}
+              onChange={(e) => setDod(e.target.value)}
+              className="border rounded-lg p-2 w-full mb-2"
+            >
+              <option value="">Select DoD</option>
+              {game.teamSheet.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+            <input
+              placeholder="Comment (optional)"
+              value={dodC}
+              onChange={(e) => setDodC(e.target.value)}
+              className="border rounded-lg p-2 w-full mb-2"
+            />
+            <div className="mb-3">
+              <p className="text-sm font-semibold mb-1">Standout Event</p>
+              {game.standoutEvents.map((ev) => (
+                <label key={ev._id} className="flex items-center gap-2 mb-1">
+                  <input
+                    type="radio"
+                    name="st"
+                    checked={standout === ev._id}
+                    onChange={() => setStandout(ev._id)}
+                  />
+                  <span>{ev.text}</span>
                 </label>
-                {standoutChoice==='new' && (
-                  <input value={standoutText} onChange={e=>setStandoutText(e.target.value)} className="w-full border rounded-lg p-2" placeholder="Describe the moment"/>
-                )}
-              </div>
+              ))}
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="st"
+                  checked={standout === "new"}
+                  onChange={() => setStandout("new")}
+                />
+                <span>Add new event</span>
+              </label>
+              {standout === "new" && (
+                <input
+                  placeholder="Describe standout moment"
+                  value={standoutText}
+                  onChange={(e) => setStandoutText(e.target.value)}
+                  className="border rounded-lg p-2 w-full mt-1"
+                />
+              )}
             </div>
-
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            {ok && <p className="text-green-700 text-sm">{ok}</p>}
-
-            <button disabled={busy} onClick={submit} className="bg-black text-white rounded-xl py-3 font-semibold">{busy ? 'Submitting…' : 'Submit vote'}</button>
-            <p className="text-xs text-slate-500">Duplicate submissions are blocked per device.</p>
+            {msg && <p className="text-sm text-red-600 mb-2">{msg}</p>}
+            <button
+              onClick={submit}
+              className="bg-black text-white rounded-xl py-3 font-semibold w-full"
+            >
+              Submit Vote
+            </button>
           </div>
-        </div>
-      );
-    }
+        );
+      }
 
-    function Results({ game }){
-      const [data, setData] = useState(null);
-      const [error, setError] = useState('');
-      const [loading, setLoading] = useState(false);
-
-      const load = async () => {
-        setError(''); setLoading(true);
-        try {
-          const res = await fetch(`/api/games/${game._id}/results`);
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.error||'Failed to load results');
-          setData(json);
-        } catch (e) { setError(e.message); } finally { setLoading(false); }
-      };
-
-      useEffect(()=>{ load(); }, [game._id]);
-
-      const Row = ({label, rows}) => (
-        <div className="bg-slate-100 rounded-xl p-3">
-          <div className="text-sm font-semibold mb-1">{label}</div>
-          {rows?.length ? rows.map(r => (
-            <div key={r.player} className="flex justify-between py-1">
-              <span>{r.player}</span><span className="font-semibold">{r.count}</span>
+      function Results({ game }) {
+        const [data, setData] = useState(null);
+        useEffect(() => {
+          fetch(`/api/games/${game._id}/results`)
+            .then((r) => r.json())
+            .then(setData);
+        }, [game._id]);
+        if (!data) return <p>Loading...</p>;
+        return (
+          <div className="card bg-white p-4">
+            <h2 className="text-xl font-semibold mb-3">Results</h2>
+            <div className="mb-2">
+              <h3 className="font-semibold">Man of the Match</h3>
+              {data.totals.mom.map((m) => (
+                <p key={m.player}>
+                  {m.player}: {m.count}
+                </p>
+              ))}
             </div>
-          )) : <p className="text-sm text-slate-500">No votes yet.</p>}
-        </div>
-      );
-
-      return (
-        <div className="card bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Results</h2>
-              <p className="text-slate-600 text-sm">{game.teamName} · {game.clubName} · {game.date} vs {game.opponents}</p>
+            <div className="mb-2">
+              <h3 className="font-semibold">Dick of the Day</h3>
+              {data.totals.dod.map((m) => (
+                <p key={m.player}>
+                  {m.player}: {m.count}
+                </p>
+              ))}
             </div>
-            <button onClick={load} className="text-sm underline">Refresh</button>
           </div>
-          {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
-          {loading && <p className="text-sm">Loading…</p>}
-          {data && (
-            <div className="grid gap-3">
-              <Row label="Man of the Match" rows={data.totals.mom} />
-              <Row label="Dick of the Day" rows={data.totals.dod} />
-              <div className="bg-slate-100 rounded-xl p-3">
-                <div className="text-sm font-semibold mb-1">Standout events</div>
-                {data.totals.standout?.length ? data.totals.standout.map(ev => (
-                  <div key={ev._id} className="flex justify-between py-1">
-                    <span>{ev.text}</span><span className="font-semibold">{ev.votes}</span>
-                  </div>
-                )) : <p className="text-sm text-slate-500">No votes yet.</p>}
-              </div>
-              <div className="grid gap-2">
-                <div>
-                  <div className="text-sm font-semibold mb-1">MoM comments</div>
-                  {data.comments?.mom?.length ? data.comments.mom.map((c, i) => (
-                    <div key={i} className="text-sm py-1 border-b border-slate-200">
-                      <span className="font-medium">{c.player}:</span> {c.comment}{c.voter ? <span className="text-slate-500"> — {c.voter}</span> : null}
-                    </div>
-                  )) : <p className="text-sm text-slate-500">No comments.</p>}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold mb-1">DoD comments</div>
-                  {data.comments?.dod?.length ? data.comments.dod.map((c, i) => (
-                    <div key={i} className="text-sm py-1 border-b border-slate-200">
-                      <span className="font-medium">{c.player}:</span> {c.comment}{c.voter ? <span className="text-slate-500"> — {c.voter}</span> : null}
-                    </div>
-                  )) : <p className="text-sm text-slate-500">No comments.</p>}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
+        );
+      }
 
-    function App(){
-      const [view, setView] = useState('Vote');
-      const [game, setGame] = useState(null);
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState('');
-      const gameId = qs.get('gameId');
-
-      const fetchGame = async (id) => {
-        setError(''); setLoading=True;
-        try {
-          const res = await fetch(`/api/games/${id}`);
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.error||'Failed to load game');
-          setGame(json);
-        } catch (e) { setError(e.message); } finally { setLoading(false); }
-      };
-
-      useEffect(()=>{ if (gameId) fetchGame(gameId); }, [gameId]);
-
-      return (
-        <div className="max-w-md mx-auto p-3 space-y-3">
-          <div className="text-center mt-1">
-            <h1 className="text-2xl font-bold">Hockey Match Voting</h1>
-            <p className="text-slate-600 text-sm">Single-screen voting & results</p>
+      function App() {
+        const [view, setView] = useState("Vote");
+        const [game, setGame] = useState(null);
+        const id = qs.get("gameId");
+        useEffect(() => {
+          if (id)
+            fetch(`/api/games/${id}`)
+              .then((r) => r.json())
+              .then(setGame);
+        }, [id]);
+        return (
+          <div className="max-w-md mx-auto p-3 space-y-3">
+            <h1 className="text-2xl font-bold text-center">
+              Hockey Match Voting
+            </h1>
+            <Toggle view={view} setView={setView} />
+            {!id && !game && <Organizer onCreated={setGame} />}
+            {game &&
+              (view === "Vote" ? (
+                <VoteForm game={game} onDone={() => setView("Results")} />
+              ) : (
+                <Results game={game} />
+              ))}
           </div>
-          <Toggle view={view} setView={setView} />
-          {loading && <p className="text-sm">Loading…</p>}
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {!gameId && !game && <Organizer onCreated={setGame} />}
-          {game && (view==='Vote' ? <VoteCard game={game} onVoted={()=>setView('Results')} /> : <Results game={game} />)}
-          <footer className="text-center text-xs text-slate-500 pb-6">© {new Date().getFullYear()} Match Voting</footer>
-        </div>
-      );
-    }
+        );
+      }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-  </script>
-</body>
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
 </html>

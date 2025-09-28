@@ -1,14 +1,15 @@
-# Hockey Match Voting — Railway
+# Hockey Voting — Railway
 
-Single-service Node/Express + MongoDB + static React SPA (same origin).
+Single-screen voting web app (Express + MongoDB + React SPA).
 
 ## Local
-cp .env.example .env   # set MONGO_URI
+
+cp .env.example .env # fill in MONGO_URI
 npm install
 npm run dev
-# http://localhost:8080
 
-## Deploy (Railway)
-- Push to GitHub, then New Project → Deploy from GitHub
-- Add env var: MONGO_URI
-- Done. Frontend `/`, API `/api/*`.
+# open http://localhost:8080
+
+## Deploy on Railway
+
+Push to GitHub → Deploy from GitHub → add env var `MONGO_URI`
