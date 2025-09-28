@@ -67,6 +67,31 @@
         );
       }
 
+      function parseTeamCsv(content) {
+        const lines = content
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        if (lines.length <= 1) return [];
+        return lines
+          .slice(1)
+          .map((line) => {
+            const cells = line
+              .split(",")
+              .map((cell) => cell.replace(/^"|"$/g, "").trim());
+            const shirt = cells[1] || "";
+            const first = cells[2] || "";
+            const last = cells[3] || "";
+            const name = [first, last].filter(Boolean).join(" ");
+            if (!name) return "";
+            if (shirt && shirt.toLowerCase() !== "n/a") {
+              return `#${shirt} ${name}`.trim();
+            }
+            return name;
+          })
+          .filter(Boolean);
+      }
+
       function Organizer({ onCreated }) {
         const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
         const [opponents, setOpponents] = useState("");
@@ -76,6 +101,27 @@
         const [standouts, setStandouts] = useState("");
         const [error, setError] = useState("");
         const [loading, setLoading] = useState(false);
+
+         function handleImportFile(e) {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setError("");
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              const text = ev.target?.result || "";
+              if (typeof text !== "string") throw new Error("Invalid file content");
+              const players = parseTeamCsv(text);
+              if (!players.length)
+                throw new Error("No players found in uploaded file");
+              setTeamSheet(players.join("\n"));
+            } catch (err) {
+              setError(err.message || "Failed to import file");
+            }
+          };
+          reader.onerror = () => setError("Failed to read file");
+          reader.readAsText(file);
+        }
 
         async function createGame() {
           setError("");
@@ -138,6 +184,15 @@
                 onChange={(e) => setTeamSheet(e.target.value)}
                 className="border rounded-lg p-2 w-full h-24"
               ></textarea>
+              <label className="text-sm text-slate-600">
+                Import from CSV: 
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleImportFile}
+                  className="block mt-1 text-sm"
+                />
+              </label>
               <textarea
                 placeholder="Optional: standout events"
                 value={standouts}
