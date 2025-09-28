@@ -92,7 +92,7 @@
       }
       
       .gradient-text {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -290,7 +290,7 @@
                     </h2>
                   </div>
                 </div>
-                <p className="text-slate-300 flex items-center gap-2">
+                <p className="text-white flex items-center gap-2">
                   <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
                   {game.date} • vs {game.opponents}
                 </p>
@@ -336,7 +336,7 @@
                     onChange={(e) => setMomVote(e.target.value)}
                     className="w-5 h-5 accent-emerald-400"
                   />
-                  <span className="text-slate-200 font-medium">Vote for existing nominee</span>
+                  <span className="text-white font-medium">Vote for existing nominee</span>
                 </label>
                 
                 {momVote === "existing" && (
@@ -363,7 +363,7 @@
                     onChange={(e) => setMomVote(e.target.value)}
                     className="w-5 h-5 accent-emerald-400"
                   />
-                  <span className="text-slate-200 font-medium">Nominate new player</span>
+                  <span className="text-white font-medium">Nominate new player</span>
                 </label>
                 
                 {momVote === "new" && (
@@ -480,7 +480,7 @@
                         className="mt-1 w-5 h-5 accent-amber-400"
                       />
                       <div className="flex-1">
-                        <span className="text-slate-200 font-medium">{cm.text}</span>
+                        <span className="text-white font-medium">{cm.text}</span>
                         <div className="text-xs text-amber-400 mt-1 font-bold">
                           🥂 {cm.votes} vote{cm.votes !== 1 ? 's' : ''}
                         </div>
@@ -753,8 +753,8 @@
                     </h1>
                   </div>
                 </div>
-                <p className="text-lg text-slate-300 font-medium">
-                  Cast your votes for MoM, DoD, and Champagne Moments ✨
+                <p className="text-lg text-white font-medium">
+                  Cast your votes for MoM, DoD, and Champagne Moments
                 </p>
               </header>
               
