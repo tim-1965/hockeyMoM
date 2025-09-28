@@ -48,6 +48,7 @@
       const { useEffect, useState } = React;
       const qs = new URLSearchParams(location.search);
       const tokenKey = "hockey_vote_token";
+      
       function getToken() {
         let t = localStorage.getItem(tokenKey);
         if (!t) {
@@ -81,200 +82,83 @@
         );
       }
 
-      function parseTeamCsv(content) {
-        const lines = content
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean);
-        if (lines.length <= 1) return [];
-        return lines
-          .slice(1)
-          .map((line) => {
-            const cells = line
-              .split(",")
-              .map((cell) => cell.replace(/^"|"$/g, "").trim());
-            const shirt = cells[1] || "";
-            const first = cells[2] || "";
-            const last = cells[3] || "";
-            const name = [first, last].filter(Boolean).join(" ");
-            if (!name) return "";
-            if (shirt && shirt.toLowerCase() !== "n/a") {
-              return `#${shirt} ${name}`.trim();
-            }
-            return name;
-          })
-          .filter(Boolean);
-      }
-
-      function Organizer({ onCreated }) {
-        const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-        const [opponents, setOpponents] = useState("");
-        const [teamName, setTeamName] = useState("Weysiders");
-        const [clubName, setClubName] = useState("Guildford Hockey Club");
-        const [teamSheet, setTeamSheet] = useState("");
-        const [standouts, setStandouts] = useState("");
-        const [error, setError] = useState("");
-        const [loading, setLoading] = useState(false);
-
-         function handleImportFile(e) {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          setError("");
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            try {
-              const text = ev.target?.result || "";
-              if (typeof text !== "string") throw new Error("Invalid file content");
-              const players = parseTeamCsv(text);
-              if (!players.length)
-                throw new Error("No players found in uploaded file");
-              setTeamSheet(players.join("\n"));
-            } catch (err) {
-              setError(err.message || "Failed to import file");
-            }
-          };
-          reader.onerror = () => setError("Failed to read file");
-          reader.readAsText(file);
-        }
-
-        async function createGame() {
-          setError("");
-          const sheet = teamSheet
-            .split(/\n|,/)
-            .map((s) => s.trim())
-            .filter(Boolean);
-          if (!date || !opponents || !sheet.length) {
-            setError("Please fill date, opponents, and team sheet.");
-            return;
-          }
-          const standoutEvents = standouts
-            .split(/\n/)
-            .map((s) => s.trim())
-            .filter(Boolean);
-          setLoading(true);
-          const res = await fetch("/api/games", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              date,
-              opponents,
-              teamName,
-              clubName,
-              teamSheet: sheet,
-              standoutEvents,
-            }),
-          });
-          const json = await res.json();
-          setLoading(false);
-          if (!res.ok) {
-            setError(json.error || "Failed to create game");
-          } else {
-            onCreated(json);
-            const url = new URL(location.href);
-            url.searchParams.set("gameId", json._id);
-            history.replaceState({}, "", url);
-          }
-        }
-
-        return (
-          <div className="card bg-slate-900/80 p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 via-cyan-400 to-blue-500 text-slate-900 font-semibold">
-                🏑
-              </span>
-              <div>
-                <h2 className="text-xl font-semibold">Create Game</h2>
-                <p className="text-sm text-slate-300">
-                  Share the match details and auto-generate a voting link.
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-4">
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-              />
-              <input
-                placeholder="Opponents"
-                value={opponents}
-                onChange={(e) => setOpponents(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-              />
-              <textarea
-                placeholder="Team sheet (comma or new line separated)"
-                value={teamSheet}
-                onChange={(e) => setTeamSheet(e.target.value)}
-                className="min-h-[110px] w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-              ></textarea>
-              <label className="text-sm text-slate-600">
-                Import from CSV: 
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  onChange={handleImportFile}
-                  className="min-h-[90px] w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-                />
-              </label>
-              <textarea
-                placeholder="Optional: standout events"
-                value={standouts}
-                onChange={(e) => setStandouts(e.target.value)}
-                className="border rounded-lg p-2 w-full h-20"
-              ></textarea>
-              {error && <p className="text-rose-400 text-sm font-medium">{error}</p>}
-              <button
-                onClick={createGame}
-                disabled={loading}
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Creating..." : "Create Game"}
-              </button>
-            </div>
-          </div>
-        );
-      }
-
       function VoteForm({ game, onDone }) {
-        const [name, setName] = useState("");
-        const [mom, setMom] = useState("");
-        const [momC, setMomC] = useState("");
-        const [dod, setDod] = useState("");
-        const [dodC, setDodC] = useState("");
-        const [standout, setStandout] = useState(
-          game.standoutEvents[0]?._id || "new"
-        );
-        const [standoutText, setStandoutText] = useState("");
+        const [voter, setVoter] = useState("");
+        const [momVote, setMomVote] = useState("existing");
+        const [momPlayer, setMomPlayer] = useState("");
+        const [momNewPlayer, setMomNewPlayer] = useState("");
+        const [momComment, setMomComment] = useState("");
+        const [dodVote, setDodVote] = useState("existing");
+        const [dodPlayer, setDodPlayer] = useState("");
+        const [dodNewPlayer, setDodNewPlayer] = useState("");
+        const [dodComment, setDodComment] = useState("");
+        const [champagneMoment, setChampagneMoment] = useState("new");
+        const [champagneExisting, setChampagneExisting] = useState("");
+        const [champagneNew, setChampagneNew] = useState("");
         const [msg, setMsg] = useState("");
+        const [results, setResults] = useState(null);
+
+        // Load current results to show existing votes
+        useEffect(() => {
+          fetch(`/api/games/${game._id}/results`)
+            .then((r) => r.json())
+            .then(setResults)
+            .catch(() => {});
+        }, [game._id]);
+
+        const availableForMom = game.teamSheet.filter(p => 
+          p !== voter && (!results?.totals?.mom?.some(m => m.player === p) || false)
+        );
+        
+        const availableForDod = game.teamSheet.filter(p => 
+          p !== voter && (!results?.totals?.dod?.some(d => d.player === p) || false)
+        );
 
         async function submit() {
           setMsg("");
+          
+          if (!voter) {
+            setMsg("Please identify yourself from the dropdown");
+            return;
+          }
+
+          const momPlayerName = momVote === "existing" ? momPlayer : momNewPlayer;
+          const dodPlayerName = dodVote === "existing" ? dodPlayer : dodNewPlayer;
+          const champagneText = champagneMoment === "new" ? champagneNew : 
+            results?.champagneMoments?.find(cm => cm._id === champagneExisting)?.text || "";
+
+          if (!momPlayerName || !dodPlayerName || !champagneText) {
+            setMsg("Please complete all votes");
+            return;
+          }
+
           const payload = {
-            voter: { name, token: deviceToken },
-            mom: { player: mom, comment: momC },
-            dod: { player: dod, comment: dodC },
-            standout:
-              standout === "new"
-                ? { textIfNew: standoutText }
-                : { eventId: standout },
+            voter: { name: voter, token: deviceToken },
+            mom: { player: momPlayerName, comment: momComment },
+            dod: { player: dodPlayerName, comment: dodComment },
+            champagneMoment: champagneMoment === "new" 
+              ? { textIfNew: champagneNew }
+              : { eventId: champagneExisting }
           };
+
           const res = await fetch(`/api/games/${game._id}/votes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
+          
           const json = await res.json();
-          if (!res.ok) setMsg(json.error || "Error");
-          else {
+          if (!res.ok) {
+            setMsg(json.error || "Error submitting vote");
+          } else {
             setMsg("✅ Vote saved!");
-            onDone();
+            setTimeout(() => onDone(), 1500);
           }
         }
 
         return (
           <div className="card bg-slate-900/80 p-6">
-            <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="mb-6 flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/80">Vote Now</p>
                 <h2 className="text-2xl font-semibold leading-tight">
@@ -288,90 +172,228 @@
                 Secure ballot
               </div>
             </div>
-            <input
-              placeholder="Your name (optional)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            />
-            <select
-              value={mom}
-              onChange={(e) => setMom(e.target.value)}
-              className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            >
-              <option value="">Select MoM</option>
-              {game.teamSheet.map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
-            <input
-              placeholder="Comment (optional)"
-              value={momC}
-              onChange={(e) => setMomC(e.target.value)}
-              className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            />
-            <select
-              value={dod}
-              onChange={(e) => setDod(e.target.value)}
-               className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            >
-              <option value="">Select DoD</option>
-              {game.teamSheet.map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
-            <input
-              placeholder="Comment (optional)"
-              value={dodC}
-              onChange={(e) => setDodC(e.target.value)}
-              className="mb-4 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
-            />
-            <div className="mb-4 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
-                Standout Event
-              </p>
-              {game.standoutEvents.map((ev) => (
-                <label key={ev._id} className="mt-3 flex items-start gap-3 rounded-xl border border-transparent bg-slate-900/70 p-3 text-sm transition hover:border-emerald-400/40">
+
+            {/* Voter Identification */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Identify Yourself *
+              </label>
+              <select
+                value={voter}
+                onChange={(e) => setVoter(e.target.value)}
+                className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                required
+              >
+                <option value="">Select your name</option>
+                {game.teamSheet.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Man of the Match */}
+            <div className="mb-6 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300/80 mb-3">
+                Man of the Match
+              </h3>
+              
+              <div className="space-y-3">
+                <label className="flex items-center gap-3">
                   <input
                     type="radio"
-                    name="st"
-                    checked={standout === ev._id}
-                    onChange={() => setStandout(ev._id)}
-                    className="mt-1 accent-emerald-400"
+                    name="momType"
+                    value="existing"
+                    checked={momVote === "existing"}
+                    onChange={(e) => setMomVote(e.target.value)}
+                    className="accent-emerald-400"
                   />
-                    <span className="text-slate-200">{ev.text}</span>
+                  <span className="text-slate-200">Vote for existing nominee</span>
                 </label>
-              ))}
-              <label className="mt-3 flex items-start gap-3 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/40 p-3 text-sm transition hover:border-emerald-400/50">
+                
+                {momVote === "existing" && (
+                  <select
+                    value={momPlayer}
+                    onChange={(e) => setMomPlayer(e.target.value)}
+                    className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  >
+                    <option value="">Select player</option>
+                    {results?.totals?.mom?.map((m) => (
+                      <option key={m.player} value={m.player}>
+                        {m.player} ({m.count} vote{m.count !== 1 ? 's' : ''})
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                <label className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="momType"
+                    value="new"
+                    checked={momVote === "new"}
+                    onChange={(e) => setMomVote(e.target.value)}
+                    className="accent-emerald-400"
+                  />
+                  <span className="text-slate-200">Nominate new player</span>
+                </label>
+                
+                {momVote === "new" && (
+                  <select
+                    value={momNewPlayer}
+                    onChange={(e) => setMomNewPlayer(e.target.value)}
+                    className="w-full rounded-xl border border-emerald-400/40 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  >
+                    <option value="">Select player to nominate</option>
+                    {availableForMom.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                )}
+                
+                <input
+                  placeholder="Comment (optional)"
+                  value={momComment}
+                  onChange={(e) => setMomComment(e.target.value)}
+                  className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                />
+              </div>
+            </div>
+
+            {/* Dick of the Day */}
+            <div className="mb-6 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-300/80 mb-3">
+                Dick of the Day
+              </h3>
+              
+              <div className="space-y-3">
+                <label className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="dodType"
+                    value="existing"
+                    checked={dodVote === "existing"}
+                    onChange={(e) => setDodVote(e.target.value)}
+                    className="accent-emerald-400"
+                  />
+                  <span className="text-slate-200">Vote for existing nominee</span>
+                </label>
+                
+                {dodVote === "existing" && (
+                  <select
+                    value={dodPlayer}
+                    onChange={(e) => setDodPlayer(e.target.value)}
+                    className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  >
+                    <option value="">Select player</option>
+                    {results?.totals?.dod?.map((d) => (
+                      <option key={d.player} value={d.player}>
+                        {d.player} ({d.count} vote{d.count !== 1 ? 's' : ''})
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                <label className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="dodType"
+                    value="new"
+                    checked={dodVote === "new"}
+                    onChange={(e) => setDodVote(e.target.value)}
+                    className="accent-emerald-400"
+                  />
+                  <span className="text-slate-200">Nominate new player</span>
+                </label>
+                
+                {dodVote === "new" && (
+                  <select
+                    value={dodNewPlayer}
+                    onChange={(e) => setDodNewPlayer(e.target.value)}
+                    className="w-full rounded-xl border border-emerald-400/40 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                  >
+                    <option value="">Select player to nominate</option>
+                    {availableForDod.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                )}
+                
+                <input
+                  placeholder="Comment (optional)"
+                  value={dodComment}
+                  onChange={(e) => setDodComment(e.target.value)}
+                  className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                />
+              </div>
+            </div>
+
+            {/* Champagne Moment */}
+            <div className="mb-6 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300/80 mb-3">
+                🥂 Champagne Moment
+              </h3>
+              
+              {results?.champagneMoments?.length > 0 && (
+                <div className="mb-3">
+                  {results.champagneMoments.map((cm) => (
+                    <label key={cm._id} className="mt-2 flex items-start gap-3 rounded-xl border border-transparent bg-slate-900/70 p-3 text-sm transition hover:border-emerald-400/40">
+                      <input
+                        type="radio"
+                        name="champagne"
+                        value={cm._id}
+                        checked={champagneMoment === cm._id}
+                        onChange={(e) => {
+                          setChampagneMoment(e.target.value);
+                          setChampagneExisting(e.target.value);
+                        }}
+                        className="mt-1 accent-emerald-400"
+                      />
+                      <div>
+                        <span className="text-slate-200">{cm.text}</span>
+                        <div className="text-xs text-slate-400 mt-1">
+                          {cm.votes} vote{cm.votes !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              
+              <label className="flex items-start gap-3 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/40 p-3 text-sm transition hover:border-emerald-400/50">
                 <input
                   type="radio"
-                  name="st"
-                  checked={standout === "new"}
-                  onChange={() => setStandout("new")}
+                  name="champagne"
+                  value="new"
+                  checked={champagneMoment === "new"}
+                  onChange={(e) => setChampagneMoment(e.target.value)}
+                  className="mt-1 accent-emerald-400"
                 />
-                <span className="text-slate-200">Add new event</span>
+                <span className="text-slate-200">Add new champagne moment</span>
               </label>
-              {standout === "new" && (
-                <input
-                  placeholder="Describe standout moment"
-                  value={standoutText}
-                  onChange={(e) => setStandoutText(e.target.value)}
-                  className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+              
+              {champagneMoment === "new" && (
+                <textarea
+                  placeholder="Describe the champagne moment (up to 100 characters)"
+                  value={champagneNew}
+                  onChange={(e) => setChampagneNew(e.target.value)}
+                  maxLength={100}
+                  className="mt-3 w-full rounded-xl border border-amber-400/40 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
+                  rows={3}
                 />
               )}
             </div>
+
             {msg && (
-              <p
-                className={`mb-3 text-sm font-medium ${
-                  msg.includes("✅") ? "text-emerald-300" : "text-rose-400"
-                }`}
-              >
+              <p className={`mb-4 text-sm font-medium ${
+                msg.includes("✅") ? "text-emerald-300" : "text-rose-400"
+              }`}>
                 {msg}
               </p>
             )}
+            
             <button
               onClick={submit}
-               className="w-full rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:brightness-105"
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:brightness-105"
             >
               Submit Vote
             </button>
@@ -381,68 +403,134 @@
 
       function Results({ game }) {
         const [data, setData] = useState(null);
+        
         useEffect(() => {
           fetch(`/api/games/${game._id}/results`)
             .then((r) => r.json())
-            .then(setData);
+            .then(setData)
+            .catch(() => {});
         }, [game._id]);
-        if (!data)
+        
+        if (!data) {
           return (
             <div className="card bg-slate-900/80 p-6 text-sm text-slate-200">
               Loading results...
             </div>
           );
+        }
+
         return (
-         <div className="card bg-slate-900/80 p-6">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="card bg-slate-900/80 p-6">
+            <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/80">
                   Live Results
                 </p>
-               <h2 className="text-2xl font-semibold">Standings</h2>
+                <h2 className="text-2xl font-semibold">Standings</h2>
               </div>
               <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
                 {data.game.date}
               </span>
             </div>
-             <div className="space-y-5">
-              {["mom", "dod"].map((key) => {
-                const label = key === "mom" ? "Man of the Match" : "Dick of the Day";
-                const totals = data.totals[key];
-                const highest = Math.max(1, ...totals.map((t) => t.count));
-                return (
-                  <div key={key}>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">
-                      {label}
-                    </h3>
-                    <div className="mt-3 space-y-2">
-                      {totals.length ? (
-                        totals.map((m, idx) => (
-                          <div
-                            key={m.player + idx}
-                            className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60"
-                          >
-                            <div className="flex items-center justify-between px-3 py-2 text-sm">
-                              <span className="font-medium text-slate-200">{m.player}</span>
-                              <span className="text-xs text-slate-300">
-                                {m.count} vote{m.count === 1 ? "" : "s"}
+            
+            <div className="space-y-6">
+              {/* Man of the Match Results */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-300/80 mb-3">
+                  Man of the Match
+                </h3>
+                <div className="space-y-2">
+                  {data.totals?.mom?.length ? (
+                    data.totals.mom.map((m, idx) => {
+                      const highest = Math.max(1, ...data.totals.mom.map(t => t.count));
+                      return (
+                        <div key={m.player + idx} className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60">
+                          <div className="flex items-center justify-between px-3 py-2 text-sm">
+                            <span className="font-medium text-slate-200">{m.player}</span>
+                            <span className="text-xs text-slate-300">
+                              {m.count} vote{m.count === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-slate-800">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-400 to-green-500"
+                              style={{ width: `${Math.max((m.count / highest) * 100, 8)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-slate-400">No votes yet.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Dick of the Day Results */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-rose-300/80 mb-3">
+                  Dick of the Day
+                </h3>
+                <div className="space-y-2">
+                  {data.totals?.dod?.length ? (
+                    data.totals.dod.map((d, idx) => {
+                      const highest = Math.max(1, ...data.totals.dod.map(t => t.count));
+                      return (
+                        <div key={d.player + idx} className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60">
+                          <div className="flex items-center justify-between px-3 py-2 text-sm">
+                            <span className="font-medium text-slate-200">{d.player}</span>
+                            <span className="text-xs text-slate-300">
+                              {d.count} vote{d.count === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-slate-800">
+                            <div
+                              className="h-full bg-gradient-to-r from-rose-400 to-red-500"
+                              style={{ width: `${Math.max((d.count / highest) * 100, 8)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-slate-400">No votes yet.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Champagne Moments Results */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-amber-300/80 mb-3">
+                  🥂 Champagne Moments
+                </h3>
+                <div className="space-y-3">
+                  {data.champagneMoments?.length ? (
+                    data.champagneMoments.map((cm, idx) => {
+                      const highest = Math.max(1, ...data.champagneMoments.map(c => c.votes));
+                      return (
+                        <div key={cm._id || idx} className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60">
+                          <div className="px-3 py-3">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <span className="text-sm text-slate-200 leading-relaxed">{cm.text}</span>
+                              <span className="text-xs text-slate-300 whitespace-nowrap">
+                                {cm.votes} vote{cm.votes === 1 ? "" : "s"}
                               </span>
                             </div>
-                            <div className="h-1.5 bg-slate-800">
+                            <div className="h-1.5 bg-slate-800 rounded-full">
                               <div
-                                className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"
-                                style={{ width: `${Math.max((m.count / highest) * 100, 8)}%` }}
+                                className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full"
+                                style={{ width: `${Math.max((cm.votes / highest) * 100, 8)}%` }}
                               ></div>
                             </div>
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-400">No votes yet.</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-slate-400">No champagne moments yet.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -451,15 +539,42 @@
       function App() {
         const [view, setView] = useState("Vote");
         const [game, setGame] = useState(null);
+        const [loading, setLoading] = useState(true);
         const id = qs.get("gameId");
+        
         useEffect(() => {
-          if (id)
+          if (id) {
             fetch(`/api/games/${id}`)
               .then((r) => r.json())
-              .then(setGame);
+              .then(setGame)
+              .catch(() => {})
+              .finally(() => setLoading(false));
+          } else {
+            setLoading(false);
+          }
         }, [id]);
+
+        if (loading) {
+          return (
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-slate-300">Loading match...</div>
+            </div>
+          );
+        }
+
+        if (!game) {
+          return (
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-2xl font-semibold text-slate-200 mb-2">Match Not Found</h1>
+                <p className="text-slate-400">Please check your link and try again.</p>
+              </div>
+            </div>
+          );
+        }
+
         return (
-           <div className="relative overflow-hidden">
+          <div className="relative overflow-hidden">
             <div className="glow left-[-10%] top-[-10%] h-80 w-80 rounded-full bg-emerald-500"></div>
             <div className="glow right-[-15%] bottom-[-10%] h-96 w-96 rounded-full bg-blue-500"></div>
             <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-5 px-4 pb-12 pt-10">
@@ -471,19 +586,16 @@
                   Matchday Player Voting
                 </h1>
                 <p className="mt-3 text-sm text-slate-300">
-                  Streamlined match administration, beautifully presented for
-                  your squad, supporters, and club staff.
+                  Vote for Man of the Match, Dick of the Day, and Champagne Moments
                 </p>
               </header>
               <Toggle view={view} setView={setView} />
               <div className="space-y-5">
-                {!id && !game && <Organizer onCreated={setGame} />}
-                {game &&
-                  (view === "Vote" ? (
-                    <VoteForm game={game} onDone={() => setView("Results")} />
-                  ) : (
-                    <Results game={game} />
-                  ))}
+                {view === "Vote" ? (
+                  <VoteForm game={game} onDone={() => setView("Results")} />
+                ) : (
+                  <Results game={game} />
+                )}
               </div>
               <footer className="pt-4 text-center text-xs text-slate-500">
                 Built for modern club culture · Secure · Mobile ready
