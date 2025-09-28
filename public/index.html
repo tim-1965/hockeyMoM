@@ -7,6 +7,11 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css"
       rel="stylesheet"
@@ -14,21 +19,30 @@
     <style>
       body {
         -webkit-tap-highlight-color: transparent;
+        font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       }
       .card {
-        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-        border-radius: 1rem;
+        box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+        border-radius: 1.25rem;
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(148, 163, 184, 0.15);
       }
       .sticky-toggle {
         position: sticky;
         top: 0;
         z-index: 30;
-        background: white;
+        background: transparent;
+      }
+      .glow {
+        position: absolute;
+        filter: blur(120px);
+        opacity: 0.4;
+        z-index: -1;
       }
     </style>
   </head>
   <body class="bg-slate-50 min-h-screen">
-    <div id="root"></div>
+    <body class="min-h-screen bg-slate-950 text-slate-100">
 
     <script type="text/babel">
       const { useEffect, useState } = React;
@@ -46,17 +60,17 @@
 
       function Toggle({ view, setView }) {
         return (
-          <div className="sticky-toggle px-3 pt-3">
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-200 rounded-2xl">
+          <div className="sticky-toggle px-4 pt-5">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900/60 rounded-3xl border border-slate-700/60">
               {["Vote", "Results"].map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
                   className={
                     (view === v
-                      ? "bg-white"
-                      : "bg-transparent text-slate-600") +
-                    " py-2 rounded-2xl font-medium transition"
+                      ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-slate-900 shadow-lg"
+                      : "bg-transparent text-slate-300 hover:text-white") +
+                    " py-2.5 rounded-3xl font-semibold transition focus:outline-none"
                   }
                 >
                   {v}
@@ -163,26 +177,36 @@
         }
 
         return (
-          <div className="card bg-white p-4">
-            <h2 className="text-xl font-semibold mb-2">Create Game</h2>
-            <div className="grid gap-3">
+          <div className="card bg-slate-900/80 p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 via-cyan-400 to-blue-500 text-slate-900 font-semibold">
+                🏑
+              </span>
+              <div>
+                <h2 className="text-xl font-semibold">Create Game</h2>
+                <p className="text-sm text-slate-300">
+                  Share the match details and auto-generate a voting link.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4">
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="border rounded-lg p-2 w-full"
+                className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
               />
               <input
                 placeholder="Opponents"
                 value={opponents}
                 onChange={(e) => setOpponents(e.target.value)}
-                className="border rounded-lg p-2 w-full"
+                className="w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
               />
               <textarea
                 placeholder="Team sheet (comma or new line separated)"
                 value={teamSheet}
                 onChange={(e) => setTeamSheet(e.target.value)}
-                className="border rounded-lg p-2 w-full h-24"
+                className="min-h-[110px] w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
               ></textarea>
               <label className="text-sm text-slate-600">
                 Import from CSV: 
@@ -190,7 +214,7 @@
                   type="file"
                   accept=".csv,text/csv"
                   onChange={handleImportFile}
-                  className="block mt-1 text-sm"
+                  className="min-h-[90px] w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                 />
               </label>
               <textarea
@@ -199,11 +223,11 @@
                 onChange={(e) => setStandouts(e.target.value)}
                 className="border rounded-lg p-2 w-full h-20"
               ></textarea>
-              {error && <p className="text-red-600 text-sm">{error}</p>}
+              {error && <p className="text-rose-400 text-sm font-medium">{error}</p>}
               <button
                 onClick={createGame}
                 disabled={loading}
-                className="bg-black text-white rounded-xl py-3 font-semibold"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Creating..." : "Create Game"}
               </button>
@@ -249,20 +273,31 @@
         }
 
         return (
-          <div className="card bg-white p-4">
-            <h2 className="text-xl font-semibold mb-3">
-              Vote ({game.date} vs {game.opponents})
-            </h2>
+          <div className="card bg-slate-900/80 p-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/80">Vote Now</p>
+                <h2 className="text-2xl font-semibold leading-tight">
+                  {game.teamName || "Hockey Team"}
+                </h2>
+                <p className="text-sm text-slate-300">
+                  {game.date} · vs {game.opponents}
+                </p>
+              </div>
+              <div className="rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-200">
+                Secure ballot
+              </div>
+            </div>
             <input
               placeholder="Your name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="border rounded-lg p-2 w-full mb-2"
+              className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
             />
             <select
               value={mom}
               onChange={(e) => setMom(e.target.value)}
-              className="border rounded-lg p-2 w-full mb-2"
+              className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
             >
               <option value="">Select MoM</option>
               {game.teamSheet.map((p) => (
@@ -273,12 +308,12 @@
               placeholder="Comment (optional)"
               value={momC}
               onChange={(e) => setMomC(e.target.value)}
-              className="border rounded-lg p-2 w-full mb-2"
+              className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
             />
             <select
               value={dod}
               onChange={(e) => setDod(e.target.value)}
-              className="border rounded-lg p-2 w-full mb-2"
+               className="mb-3 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
             >
               <option value="">Select DoD</option>
               {game.teamSheet.map((p) => (
@@ -289,43 +324,54 @@
               placeholder="Comment (optional)"
               value={dodC}
               onChange={(e) => setDodC(e.target.value)}
-              className="border rounded-lg p-2 w-full mb-2"
+              className="mb-4 w-full rounded-xl border border-slate-700/60 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
             />
-            <div className="mb-3">
-              <p className="text-sm font-semibold mb-1">Standout Event</p>
+            <div className="mb-4 rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
+                Standout Event
+              </p>
               {game.standoutEvents.map((ev) => (
-                <label key={ev._id} className="flex items-center gap-2 mb-1">
+                <label key={ev._id} className="mt-3 flex items-start gap-3 rounded-xl border border-transparent bg-slate-900/70 p-3 text-sm transition hover:border-emerald-400/40">
                   <input
                     type="radio"
                     name="st"
                     checked={standout === ev._id}
                     onChange={() => setStandout(ev._id)}
+                    className="mt-1 accent-emerald-400"
                   />
-                  <span>{ev.text}</span>
+                    <span className="text-slate-200">{ev.text}</span>
                 </label>
               ))}
-              <label className="flex items-center gap-2">
+              <label className="mt-3 flex items-start gap-3 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/40 p-3 text-sm transition hover:border-emerald-400/50">
                 <input
                   type="radio"
                   name="st"
                   checked={standout === "new"}
                   onChange={() => setStandout("new")}
                 />
-                <span>Add new event</span>
+                <span className="text-slate-200">Add new event</span>
               </label>
               {standout === "new" && (
                 <input
                   placeholder="Describe standout moment"
                   value={standoutText}
                   onChange={(e) => setStandoutText(e.target.value)}
-                  className="border rounded-lg p-2 w-full mt-1"
+                  className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-slate-950/70 p-3 text-sm text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                 />
               )}
             </div>
-            {msg && <p className="text-sm text-red-600 mb-2">{msg}</p>}
+            {msg && (
+              <p
+                className={`mb-3 text-sm font-medium ${
+                  msg.includes("✅") ? "text-emerald-300" : "text-rose-400"
+                }`}
+              >
+                {msg}
+              </p>
+            )}
             <button
               onClick={submit}
-              className="bg-black text-white rounded-xl py-3 font-semibold w-full"
+               className="w-full rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:brightness-105"
             >
               Submit Vote
             </button>
@@ -340,25 +386,63 @@
             .then((r) => r.json())
             .then(setData);
         }, [game._id]);
-        if (!data) return <p>Loading...</p>;
-        return (
-          <div className="card bg-white p-4">
-            <h2 className="text-xl font-semibold mb-3">Results</h2>
-            <div className="mb-2">
-              <h3 className="font-semibold">Man of the Match</h3>
-              {data.totals.mom.map((m) => (
-                <p key={m.player}>
-                  {m.player}: {m.count}
-                </p>
-              ))}
+        if (!data)
+          return (
+            <div className="card bg-slate-900/80 p-6 text-sm text-slate-200">
+              Loading results...
             </div>
-            <div className="mb-2">
-              <h3 className="font-semibold">Dick of the Day</h3>
-              {data.totals.dod.map((m) => (
-                <p key={m.player}>
-                  {m.player}: {m.count}
+          );
+        return (
+         <div className="card bg-slate-900/80 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.2em] text-emerald-300/80">
+                  Live Results
                 </p>
-              ))}
+               <h2 className="text-2xl font-semibold">Standings</h2>
+              </div>
+              <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                {data.game.date}
+              </span>
+            </div>
+             <div className="space-y-5">
+              {["mom", "dod"].map((key) => {
+                const label = key === "mom" ? "Man of the Match" : "Dick of the Day";
+                const totals = data.totals[key];
+                const highest = Math.max(1, ...totals.map((t) => t.count));
+                return (
+                  <div key={key}>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">
+                      {label}
+                    </h3>
+                    <div className="mt-3 space-y-2">
+                      {totals.length ? (
+                        totals.map((m, idx) => (
+                          <div
+                            key={m.player + idx}
+                            className="overflow-hidden rounded-xl border border-slate-700/60 bg-slate-950/60"
+                          >
+                            <div className="flex items-center justify-between px-3 py-2 text-sm">
+                              <span className="font-medium text-slate-200">{m.player}</span>
+                              <span className="text-xs text-slate-300">
+                                {m.count} vote{m.count === 1 ? "" : "s"}
+                              </span>
+                            </div>
+                            <div className="h-1.5 bg-slate-800">
+                              <div
+                                className="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"
+                                style={{ width: `${Math.max((m.count / highest) * 100, 8)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400">No votes yet.</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -375,18 +459,36 @@
               .then(setGame);
         }, [id]);
         return (
-          <div className="max-w-md mx-auto p-3 space-y-3">
-            <h1 className="text-2xl font-bold text-center">
-              Hockey Match Voting
-            </h1>
-            <Toggle view={view} setView={setView} />
-            {!id && !game && <Organizer onCreated={setGame} />}
-            {game &&
-              (view === "Vote" ? (
-                <VoteForm game={game} onDone={() => setView("Results")} />
-              ) : (
-                <Results game={game} />
-              ))}
+           <div className="relative overflow-hidden">
+            <div className="glow left-[-10%] top-[-10%] h-80 w-80 rounded-full bg-emerald-500"></div>
+            <div className="glow right-[-15%] bottom-[-10%] h-96 w-96 rounded-full bg-blue-500"></div>
+            <div className="mx-auto flex min-h-screen max-w-lg flex-col gap-5 px-4 pb-12 pt-10">
+              <header className="text-center">
+                <p className="text-xs uppercase tracking-[0.4em] text-emerald-200/70">
+                  Guildford Hockey Club
+                </p>
+                <h1 className="mt-2 text-4xl font-semibold">
+                  Matchday Player Voting
+                </h1>
+                <p className="mt-3 text-sm text-slate-300">
+                  Streamlined match administration, beautifully presented for
+                  your squad, supporters, and club staff.
+                </p>
+              </header>
+              <Toggle view={view} setView={setView} />
+              <div className="space-y-5">
+                {!id && !game && <Organizer onCreated={setGame} />}
+                {game &&
+                  (view === "Vote" ? (
+                    <VoteForm game={game} onDone={() => setView("Results")} />
+                  ) : (
+                    <Results game={game} />
+                  ))}
+              </div>
+              <footer className="pt-4 text-center text-xs text-slate-500">
+                Built for modern club culture · Secure · Mobile ready
+              </footer>
+            </div>
           </div>
         );
       }
