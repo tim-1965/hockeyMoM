@@ -23,6 +23,19 @@
         font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         background: linear-gradient(135deg, #0c0a1f 0%, #1a1335 25%, #2d1b69 50%, #1a1335 75%, #0c0a1f 100%);
         min-height: 100vh;
+        color: white !important;
+      }
+      
+      * {
+        color: inherit;
+      }
+      
+      input, select, textarea, option {
+        color: white !important;
+      }
+      
+      input::placeholder, textarea::placeholder {
+        color: #94a3b8 !important;
       }
       
       .glass-card {
@@ -160,7 +173,7 @@
       }
     </style>
   </head>
-  <body class="min-h-screen text-slate-100">
+  <body class="min-h-screen text-white">
     <div id="root"></div>
     <script type="text/babel">
       const { useEffect, useState } = React;
@@ -499,7 +512,7 @@
                   onChange={(e) => setChampagneMoment(e.target.value)}
                   className="mt-1 w-5 h-5 accent-amber-400"
                 />
-                <span className="text-slate-200 font-medium">✨ Add new champagne moment</span>
+                <span className="text-white font-medium">✨ Add new champagne moment</span>
               </label>
               
               {champagneMoment === "new" && (
@@ -549,7 +562,7 @@
               <div className="animated-bg w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
                 ⚡
               </div>
-              <p className="text-slate-200 font-medium">Loading magical results...</p>
+              <p className="text-white font-medium">Loading magical results...</p>
             </div>
           );
         }
@@ -603,7 +616,7 @@
                       );
                     })
                   ) : (
-                    <p className="text-slate-400 text-center py-8 font-medium">🏒 No votes yet - be the first!</p>
+                    <p className="text-white text-center py-8 font-medium">🏒 No votes yet - be the first!</p>
                   )}
                 </div>
               </div>
@@ -637,7 +650,7 @@
                       );
                     })
                   ) : (
-                    <p className="text-slate-400 text-center py-8 font-medium">🎯 No nominations yet!</p>
+                    <p className="text-white text-center py-8 font-medium">🎯 No nominations yet!</p>
                   )}
                 </div>
               </div>
@@ -675,7 +688,7 @@
                       );
                     })
                   ) : (
-                    <p className="text-slate-400 text-center py-8 font-medium">🥂 No magical moments captured yet!</p>
+                    <p className="text-white text-center py-8 font-medium">🥂 No magical moments captured yet!</p>
                   )}
                 </div>
               </div>
@@ -769,7 +782,7 @@
               </div>
               
               <footer className="pt-8 text-center">
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-white font-medium">
                   Built for modern club culture • Secure • Mobile ready ⚡
                 </p>
               </footer>
