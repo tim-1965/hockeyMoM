@@ -36,19 +36,17 @@
         color: inherit;
       }
       
-      input, select, textarea {
+      input, textarea {
         color: white !important;
         -webkit-user-select: text !important;
         user-select: text !important;
         background-color: rgba(15, 23, 42, 0.9) !important;
       }
-      
-      option {
-        color: black !important;
-        background-color: white !important;
-      }
-      
-      select {
+           
+      option,
+      select,
+      select:focus,
+      select:active {
         color: black !important;
         background-color: white !important;
       }
@@ -195,7 +193,7 @@
   <body class="min-h-screen text-white">
     <div id="root"></div>
     <script type="text/babel">
-      const { useEffect, useState } = React;
+      const { useEffect, useState, useRef } = React;
       const qs = new URLSearchParams(location.search);
       const tokenKey = "hockey_vote_token";
       
@@ -360,6 +358,7 @@
         const [champagneComment, setChampagneComment] = useState("");
         const [msg, setMsg] = useState("");
         const [results, setResults] = useState(null);
+        const messageTimeoutRef = useRef(null);
 
         const isMatchClosed = game.status === "closed";
 
@@ -374,83 +373,127 @@
             .catch(() => {});
         };
 
-        const hasVotedMom = results?.userVotes?.mom || false;
-        const hasVotedDod = results?.userVotes?.dod || false;
-        const hasVotedChampagne = results?.userVotes?.champagne || false;
+           useEffect(() => {
+          if (!results?.userVotes) return;
 
+          const momVote = results.userVotes.mom;
+          setNewMomPlayer(momVote?.player || "");
+          setMomComment(momVote?.comment || "");
+
+          const dodVote = results.userVotes.dod;
+          setNewDodPlayer(dodVote?.player || "");
+          setDodComment(dodVote?.comment || "");
+
+          const champagneVote = results.userVotes.champagne;
+          setChampagneComment(champagneVote?.comment || "");
+        }, [results?.userVotes]);
+
+        const momVote = results?.userVotes?.mom;
+        const dodVote = results?.userVotes?.dod;
+        const champagneVote = results?.userVotes?.champagne;
+
+        const hasVotedMom = !!momVote?.player;
+        const hasVotedDod = !!dodVote?.player;
+        const hasVotedChampagne = !!champagneVote?.eventId;
         const teamSheet = Array.isArray(game?.teamSheet) ? game.teamSheet : [];
         const availableForMom = teamSheet.filter(p => p !== playerName);
         const availableForDod = teamSheet.filter(p => p !== playerName);
 
-        async function voteForMom(playerName, comment = "") {
-          await submitVote('mom', playerName, comment);
-        }
+         const resetMessage = () => {
+          if (messageTimeoutRef.current) {
+            clearTimeout(messageTimeoutRef.current);
+          }
+          messageTimeoutRef.current = setTimeout(() => {
+            setMsg("");
+            messageTimeoutRef.current = null;
+          }, 3000);
+        };
 
-        async function voteForDod(playerName, comment = "") {
-          await submitVote('dod', playerName, comment);
-        }
+        useEffect(() => () => {
+          if (messageTimeoutRef.current) {
+            clearTimeout(messageTimeoutRef.current);
+          }
+        }, []);
 
-        async function voteForChampagne(eventId = null, newText = null, comment = "") {
-          const payload = {
-            voter: { name: playerName, token: deviceToken },
-            category: "champagne",
-            mom: { player: "temp", comment: "" },
-            dod: { player: "temp", comment: "" },
-            champagneMoment: newText 
-              ? { textIfNew: newText, comment: comment }
-              : { eventId: eventId, comment: comment }
-          };
+        async function submitVote(voteData, successText) {
+          try {
+            const payload = {
+              voter: { name: playerName, token: deviceToken },
+              ...voteData,
+            };
 
-          const res = await fetch(`/api/games/${game._id}/votes`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
+            const res = await fetch(`/api/games/${game._id}/votes`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
 
-          if (res.ok) {
-            setNewChampagneText("");
-            setChampagneComment("");
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || "Failed to submit vote");
+            }
+
+            await res.json().catch(() => ({}));
+            setMsg(successText);
+            resetMessage();
             loadResults();
-            setMsg("Champagne vote cast!");
-            setTimeout(() => setMsg(""), 3000);
-          } else {
-            const data = await res.json();
-            setMsg(data.error || "Failed to submit vote");
-            setTimeout(() => setMsg(""), 3000);
+            return true;
+          } catch (error) {
+            setMsg(error.message || "Failed to submit vote");
+            resetMessage();
+            return false;
           }
         }
 
-        async function submitVote(type, player, comment = "") {
-          const payload = {
-            voter: { name: playerName, token: deviceToken },
-            category: type,
-            mom: { player: type === 'mom' ? player : "temp", comment: type === 'mom' ? comment : "" },
-            dod: { player: type === 'dod' ? player : "temp", comment: type === 'dod' ? comment : "" },
-            champagneMoment: { textIfNew: "temp", comment: "" }
-          };
+        async function voteForMom(player, comment = "") {
+          const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+          const previousVote = results?.userVotes?.mom?.player;
+          const success = await submitVote(
+            { mom: { player, comment: trimmedComment } },
+            previousVote ? `Vote updated for ${player}!` : `Vote cast for ${player}!`
+          );
 
-          const res = await fetch(`/api/games/${game._id}/votes`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
+          if (success) {
+            setNewMomPlayer(player);
+            setMomComment(trimmedComment);
+          }
+        }
 
-          if (res.ok) {
-            if (type === 'mom') {
-              setNewMomPlayer("");
-              setMomComment("");
-            }
-            if (type === 'dod') {
-              setNewDodPlayer("");
-              setDodComment("");
-            }
-            loadResults();
-            setMsg(`Vote cast for ${player}!`);
-            setTimeout(() => setMsg(""), 3000);
+        async function voteForDod(player, comment = "") {
+          const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+          const previousVote = results?.userVotes?.dod?.player;
+          const success = await submitVote(
+            { dod: { player, comment: trimmedComment } },
+            previousVote ? `Vote updated for ${player}!` : `Vote cast for ${player}!`
+          );
+
+          if (success) {
+            setNewDodPlayer(player);
+            setDodComment(trimmedComment);
+          }
+        }
+
+         async function voteForChampagne({ eventId = null, newText = null, comment = "" }) {
+          const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+          const payload = {};
+
+          if (newText) {
+            payload.champagneMoment = { textIfNew: newText, comment: trimmedComment };
+          } else if (eventId) {
+            payload.champagneMoment = { eventId, comment: trimmedComment };
           } else {
-            const data = await res.json();
-            setMsg(data.error || "Failed to submit vote");
-            setTimeout(() => setMsg(""), 3000);
+             return;
+          }
+
+          const previousVote = results?.userVotes?.champagne?.eventId;
+          const success = await submitVote(
+            payload,
+            previousVote ? "Champagne vote updated!" : "Champagne vote cast!"
+          );
+
+          if (success) {
+            setNewChampagneText("");
+            setChampagneComment(trimmedComment);
           }
         }
 
@@ -467,8 +510,9 @@
         };
 
         const addNewChampagne = () => {
-          if (newChampagneText.trim()) {
-            voteForChampagne(null, newChampagneText.trim(), champagneComment);
+           const trimmed = newChampagneText.trim();
+          if (trimmed) {
+            voteForChampagne({ newText: trimmed, comment: champagneComment });
           }
         };
 
@@ -552,24 +596,43 @@
                 )}
               </div>
               
+               {hasVotedMom && (
+                <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-sm text-green-200">
+                    You voted for <span className="font-semibold text-green-100">{momVote.player}</span>
+                    {momVote.comment ? (
+                      <span className="italic"> — "{momVote.comment}"</span>
+                    ) : '.'}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-4 mb-6">
                 {results?.totals?.mom?.length ? (
                   results.totals.mom.map((m, idx) => {
                     const highest = Math.max(1, ...results.totals.mom.map(t => t.count));
                     const percentage = (m.count / highest) * 100;
+                    const isUserChoice = momVote?.player === m.player;
                     return (
                       <div key={m.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
                           <div className="flex-1">
-                            <span className="font-bold text-white text-lg">{m.player}</span>
-                            <span className="ml-3 text-sm" style={{color: '#FDB81E'}}>({m.count} vote{m.count !== 1 ? 's' : ''})</span>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="font-bold text-white text-lg">{m.player}</span>
+                              <span className="text-sm" style={{color: '#FDB81E'}}>({m.count} vote{m.count !== 1 ? 's' : ''})</span>
+                              {isUserChoice && (
+                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/40">
+                                  Your vote
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <button
-                            onClick={() => voteForMom(m.player, "")}
-                            disabled={isMatchClosed || hasVotedMom}
+                            onClick={() => voteForMom(m.player, momComment)}
+                            disabled={isMatchClosed}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Vote
+                            {isUserChoice ? 'Update Vote' : 'Vote'}
                           </button>
                         </div>
                         <div className="h-3 bg-slate-800 relative overflow-hidden">
@@ -596,9 +659,14 @@
                 )}
               </div>
 
-              {!isMatchClosed && !hasVotedMom && (
+              {!isMatchClosed && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
-                  <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
+                      <h4 className="text-lg font-bold text-white mb-2">
+                    {hasVotedMom ? 'Update Your Vote' : 'Nominate New Player'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Choose a teammate and optionally add a comment to explain your pick.
+                  </p>
                   <div className="space-y-3">
                     <select
                       value={newMomPlayer}
@@ -625,7 +693,7 @@
                       disabled={!newMomPlayer}
                       className="vote-button w-full px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Submit Vote
+                      {hasVotedMom ? 'Update Vote' : 'Submit Vote'}
                     </button>
                   </div>
                 </div>
@@ -646,24 +714,43 @@
                 )}
               </div>
               
+               {hasVotedDod && (
+                <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-sm text-green-200">
+                    You voted for <span className="font-semibold text-green-100">{dodVote.player}</span>
+                    {dodVote.comment ? (
+                      <span className="italic"> — "{dodVote.comment}"</span>
+                    ) : '.'}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-4 mb-6">
                 {results?.totals?.dod?.length ? (
                   results.totals.dod.map((d, idx) => {
                     const highest = Math.max(1, ...results.totals.dod.map(t => t.count));
                     const percentage = (d.count / highest) * 100;
+                    const isUserChoice = dodVote?.player === d.player;
                     return (
                       <div key={d.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
                           <div className="flex-1">
-                            <span className="font-bold text-white text-lg">{d.player}</span>
-                            <span className="ml-3 text-sm" style={{color: '#FDB81E'}}>({d.count} vote{d.count !== 1 ? 's' : ''})</span>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="font-bold text-white text-lg">{d.player}</span>
+                              <span className="text-sm" style={{color: '#FDB81E'}}>({d.count} vote{d.count !== 1 ? 's' : ''})</span>
+                              {isUserChoice && (
+                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/40">
+                                  Your vote
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <button
-                            onClick={() => voteForDod(d.player, "")}
-                            disabled={isMatchClosed || hasVotedDod}
+                            onClick={() => voteForDod(d.player, dodComment)}
+                            disabled={isMatchClosed}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Vote
+                          {isUserChoice ? 'Update Vote' : 'Vote'}
                           </button>
                         </div>
                         <div className="h-3 bg-slate-800 relative overflow-hidden">
@@ -690,9 +777,14 @@
                 )}
               </div>
 
-              {!isMatchClosed && !hasVotedDod && (
+              {!isMatchClosed && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
-                  <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
+                  <h4 className="text-lg font-bold text-white mb-2">
+                    {hasVotedDod ? 'Update Your Vote' : 'Nominate New Player'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Pick a teammate and share why they earned the DoD nod (optional).
+                  </p>
                   <div className="space-y-3">
                     <select
                       value={newDodPlayer}
@@ -719,7 +811,7 @@
                       disabled={!newDodPlayer}
                       className="vote-button w-full px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Submit Vote
+                    {hasVotedDod ? 'Update Vote' : 'Submit Vote'}
                     </button>
                   </div>
                 </div>
@@ -740,13 +832,26 @@
                 )}
               </div>
               
+              {hasVotedChampagne && (
+                <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-sm text-green-200">
+                    You voted for <span className="font-semibold text-green-100">{champagneVote.text || 'this moment'}</span>
+                    {champagneVote.comment ? (
+                      <span className="italic"> — "{champagneVote.comment}"</span>
+                    ) : '.'}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-4 mb-6">
                 {results?.champagneMoments?.length ? (
                   results.champagneMoments.map((cm, idx) => {
                     const highest = Math.max(1, ...results.champagneMoments.map(c => c.votes));
                     const percentage = (cm.votes / highest) * 100;
+                    const eventId = cm._id?.toString?.() ? cm._id.toString() : cm._id || `${idx}`;
+                    const isUserSelection = champagneVote?.eventId === eventId;
                     return (
-                      <div key={cm._id || idx} className="neon-border rounded-xl overflow-hidden">
+                           <div key={eventId} className="neon-border rounded-xl overflow-hidden">
                         <div className="p-5 bg-slate-900/60">
                           <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex-1">
@@ -754,13 +859,19 @@
                                 {cm.text}
                               </span>
                               <span className="text-sm mt-1 inline-block" style={{color: '#FDB81E'}}>({cm.votes} vote{cm.votes !== 1 ? 's' : ''})</span>
-                            </div>
+                            {isUserSelection && (
+                                <span className="ml-0 mt-2 inline-block text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/40">
+                                  Your vote
+                                </span>
+                              )}
+                              </div>
                             <button
-                              onClick={() => voteForChampagne(cm._id, null, "")}
-                              disabled={isMatchClosed || hasVotedChampagne}
-                              className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                             onClick={() => {
+                                voteForChampagne({ eventId, comment: champagneComment });
+                              }}
+                              disabled={isMatchClosed} className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Vote
+                         {isUserSelection ? 'Update Vote' : 'Vote'}
                             </button>
                           </div>
                           <div className="h-3 bg-slate-800 rounded-full relative overflow-hidden">
@@ -788,9 +899,14 @@
                 )}
               </div>
 
-              {!isMatchClosed && !hasVotedChampagne && (
+              {!isMatchClosed && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
-                  <h4 className="text-lg font-bold text-white mb-4">Add New Champagne Moment</h4>
+                  <h4 className="text-lg font-bold text-white mb-2">
+                    {hasVotedChampagne ? 'Share Another Magical Moment' : 'Add New Champagne Moment'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Add a new nomination below or update your comment before voting for an existing moment.
+                  </p>
                   <div className="space-y-3">
                     <textarea
                       placeholder="Describe the magical moment (up to 100 characters)"
@@ -802,7 +918,7 @@
                       rows={2}
                     />
                     <textarea
-                      placeholder="Add an optional comment..."
+                      placeholder="Add an optional comment (saved with your next vote)..."
                       value={champagneComment}
                       onChange={(e) => setChampagneComment(e.target.value)}
                       maxLength={200}
@@ -815,7 +931,7 @@
                       disabled={!newChampagneText.trim()}
                       className="vote-button w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Submit Vote
+                      {hasVotedChampagne ? 'Share Moment & Vote' : 'Submit Vote'}
                     </button>
                   </div>
                 </div>
