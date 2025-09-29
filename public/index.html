@@ -421,18 +421,13 @@
                       <div key={m.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
                           <span className="font-bold text-white text-lg">{m.player}</span>
-                          <div className="flex items-center gap-6">
-                            <span className="font-black" style={{color: '#FDB81E'}}>
-                              {m.count} vote{m.count === 1 ? "" : "s"}
-                            </span>
-                            <button
-                              onClick={() => voteForMom(m.player)}
-                              disabled={!voter || isMatchClosed}
-                              className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Vote
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => voteForMom(m.player)}
+                            disabled={!voter || isMatchClosed}
+                            className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Vote
+                          </button>
                         </div>
                         <div className="h-3 bg-slate-800 relative overflow-hidden">
                           <div
@@ -493,18 +488,13 @@
                       <div key={d.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
                           <span className="font-bold text-white text-lg">{d.player}</span>
-                          <div className="flex items-center gap-6">
-                            <span className="font-black" style={{color: '#FDB81E'}}>
-                              {d.count} vote{d.count === 1 ? "" : "s"}
-                            </span>
-                            <button
-                              onClick={() => voteForDod(d.player)}
-                              disabled={!voter || isMatchClosed}
-                              className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Vote
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => voteForDod(d.player)}
+                            disabled={!voter || isMatchClosed}
+                            className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Vote
+                          </button>
                         </div>
                         <div className="h-3 bg-slate-800 relative overflow-hidden">
                           <div
@@ -568,18 +558,13 @@
                             <span className="text-white font-medium leading-relaxed flex-1">
                               {cm.text}
                             </span>
-                            <div className="flex items-center gap-6">
-                              <span className="font-black whitespace-nowrap" style={{color: '#FDB81E'}}>
-                                {cm.votes} vote{cm.votes === 1 ? "" : "s"}
-                              </span>
-                              <button
-                                onClick={() => voteForChampagne(cm._id)}
-                                disabled={!voter || isMatchClosed}
-                                className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Vote
-                              </button>
-                            </div>
+                            <button
+                              onClick={() => voteForChampagne(cm._id)}
+                              disabled={!voter || isMatchClosed}
+                              className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Vote
+                            </button>
                           </div>
                           <div className="h-3 bg-slate-800 rounded-full relative overflow-hidden">
                             <div
