@@ -95,16 +95,30 @@ app.get("/api/admin/check", (req, res) => {
 });
 
 app.post("/api/games", async (req, res) => {
-  const { date, opponents, teamSheet = [], champagneMoments = [] } = req.body;
-  if (!date || !opponents || !teamSheet.length)
-    return res.status(400).json({ error: "Missing fields" });
-  const game = await Game.create({
-    date,
-    opponents,
-    teamSheet,
-    champagneMoments: champagneMoments.map((t) => ({ text: t })),
-  });
-  res.json(game);
+  try {
+    console.log("Received game creation request:", req.body);
+    const { date, opponents, teamName = "Weysiders", clubName = "Guildford Hockey Club", teamSheet = [], champagneMoments = [] } = req.body;
+    
+    if (!date || !opponents || !teamSheet.length) {
+      console.log("Validation failed:", { date: !!date, opponents: !!opponents, teamSheetLength: teamSheet.length });
+      return res.status(400).json({ error: "Missing required fields: date, opponents, and team sheet" });
+    }
+    
+    const game = await Game.create({
+      date,
+      opponents,
+      teamName,
+      clubName,
+      teamSheet,
+      champagneMoments: champagneMoments.map((t) => ({ text: t })),
+    });
+    
+    console.log("Game created successfully:", game._id);
+    res.json(game);
+  } catch (error) {
+    console.error("Error creating game:", error);
+    res.status(500).json({ error: error.message || "Failed to create game" });
+  }
 });
 
 app.get("/api/games/:id", async (req, res) => {

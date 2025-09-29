@@ -250,12 +250,17 @@
           setError("");
           setSuccess("");
           const sheet = teamSheet.split(/\n|,/).map((s) => s.trim()).filter(Boolean);
+          
           if (!date || !opponents || !sheet.length) {
             setError("Please fill date, opponents, and team sheet.");
             return;
           }
+          
           setLoading(true);
+          
           try {
+            console.log("Creating game with data:", { date, opponents, teamName, teamSheet: sheet });
+            
             const res = await fetch("/api/games", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -263,14 +268,20 @@
                 date,
                 opponents,
                 teamName,
+                clubName: "Guildford Hockey Club",
                 teamSheet: sheet,
                 champagneMoments: [],
               }),
             });
+            
+            console.log("Response status:", res.status);
             const json = await res.json();
+            console.log("Response data:", json);
+            
             setLoading(false);
+            
             if (!res.ok) {
-              setError(json.error || "Failed to create game");
+              setError(json.error || `Failed to create game: ${res.status}`);
             } else {
               setSuccess("Match created successfully!");
               setDate(new Date().toISOString().slice(0, 10));
@@ -281,7 +292,8 @@
             }
           } catch (err) {
             setLoading(false);
-            setError("Connection error");
+            console.error("Error creating game:", err);
+            setError(`Connection error: ${err.message}`);
           }
         }
 
