@@ -134,23 +134,31 @@
           setLoading(true);
           
           try {
+            console.log("Attempting login...");
             const res = await fetch("/api/admin/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: "include", // Important for session cookies
               body: JSON.stringify({ password }),
             });
+            
+            console.log("Login response status:", res.status);
+            const data = await res.json();
+            console.log("Login response data:", data);
             
             setLoading(false);
             
             if (res.ok) {
+              console.log("Login successful, reloading auth state");
               onLogin();
             } else {
-              setError("Invalid password");
+              setError(data.error || "Login failed");
               setPassword("");
             }
           } catch (err) {
             setLoading(false);
-            setError("Connection error");
+            console.error("Login error:", err);
+            setError(`Connection error: ${err.message}`);
           }
         }
 
