@@ -58,16 +58,32 @@ const Game = mongoose.model(
   })
 );
 
-const Vote = mongoose.model(
-  "Vote",
-  new mongoose.Schema({
-    gameId: mongoose.Types.ObjectId,
-    voter: { name: String, token: String },
-    mom: { player: String, comment: String },
-    dod: { player: String, comment: String },
-    champagneMoment: { eventId: mongoose.Types.ObjectId, textIfNew: String },
-  })
+const voteSchema = new mongoose.Schema(
+  {
+    gameId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    voter: {
+      name: { type: String, required: true },
+      token: { type: String, required: true },
+    },
+    mom: {
+      player: String,
+      comment: String,
+    },
+    dod: {
+      player: String,
+      comment: String,
+    },
+    champagneMoment: {
+      eventId: mongoose.Schema.Types.ObjectId,
+      comment: String,
+    },
+  },
+  { timestamps: true }
 );
+
+voteSchema.index({ gameId: 1, "voter.token": 1 }, { unique: true });
+
+const Vote = mongoose.model("Vote", voteSchema);
 
 // ========== API ROUTES - MUST COME BEFORE STATIC FILES ==========
 
@@ -171,63 +187,215 @@ app.get("/api/games/:id", async (req, res) => {
 // Submit vote
 app.post("/api/games/:id/votes", async (req, res) => {
   try {
-    const g = await Game.findById(req.params.id);
-    if (!g) return res.status(404).json({ error: "Game not found" });
-    
-    // Check if game is closed
-    if (g.status === "closed") {
+   const game = await Game.findById(req.params.id);
+    if (!game) return res.status(404).json({ error: "Game not found" });
+
+    if (game.status === "closed") {
       return res.status(403).json({ error: "This match is closed. Voting has ended." });
     }
 
-    // Handle new champagne moment
-    if (req.body.champagneMoment?.textIfNew) {
-      const newMoment = { text: req.body.champagneMoment.textIfNew };
-      g.champagneMoments.push(newMoment);
-      await g.save();
-      req.body.champagneMoment.eventId = g.champagneMoments[g.champagneMoments.length - 1]._id;
-      delete req.body.champagneMoment.textIfNew;
+    const { voter, mom, dod, champagneMoment } = req.body || {};
+    const voterName = typeof voter?.name === "string" ? voter.name.trim() : "";
+    if (!voter?.token || !voterName) {
+      return res.status(400).json({ error: "Missing voter information" });
     }
 
-    const v = await Vote.create({ ...req.body, gameId: g._id });
-    res.json(v);
+    const formatNomination = (entry) => {
+      if (!entry) return null;
+      const player = typeof entry.player === "string" ? entry.player.trim() : "";
+      if (!player) return null;
+      const comment = typeof entry.comment === "string" ? entry.comment.trim() : "";
+      return { player, comment };
+    };
+
+    const updateDoc = {
+      $set: {
+        voter: { name: voterName, token: voter.token },
+        gameId: game._id,
+      },
+    };
+
+    const unsetDoc = {};
+
+    if (mom !== undefined) {
+      const momVote = formatNomination(mom);
+      if (momVote) {
+        updateDoc.$set.mom = momVote;
+      } else {
+        unsetDoc.mom = "";
+      }
+    }
+
+    if (dod !== undefined) {
+      const dodVote = formatNomination(dod);
+      if (dodVote) {
+        updateDoc.$set.dod = dodVote;
+      } else {
+        unsetDoc.dod = "";
+      }
+    }
+
+    if (champagneMoment !== undefined) {
+      const champagneUpdate = {};
+
+      const newText =
+        typeof champagneMoment.textIfNew === "string"
+          ? champagneMoment.textIfNew.trim()
+          : "";
+      if (newText) {
+        const newMoment = { text: newText };
+        game.champagneMoments.push(newMoment);
+        await game.save();
+        champagneUpdate.eventId =
+          game.champagneMoments[game.champagneMoments.length - 1]._id;
+      }
+
+      if (champagneMoment.eventId) {
+        champagneUpdate.eventId = champagneMoment.eventId;
+      }
+
+      if (champagneMoment.comment !== undefined) {
+        champagneUpdate.comment =
+          typeof champagneMoment.comment === "string"
+            ? champagneMoment.comment.trim()
+            : "";
+      }
+
+      if (champagneUpdate.eventId) {
+        if (!("comment" in champagneUpdate)) {
+          champagneUpdate.comment = "";
+        }
+        updateDoc.$set.champagneMoment = champagneUpdate;
+      } else {
+        unsetDoc.champagneMoment = "";
+      }
+    }
+
+    if (Object.keys(unsetDoc).length) {
+      updateDoc.$unset = unsetDoc;
+    }
+
+     const vote = await Vote.findOneAndUpdate(
+      { gameId: game._id, "voter.token": voter.token },
+      updateDoc,
+      { returnDocument: "after", upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json(vote);
   } catch (e) {
-    if (e.code === 11000)
+    if (e.code === 11000) {
       return res.status(409).json({ error: "Already voted" });
-    res.status(500).json({ error: e.message });
+    }
+    res.status(500).json({ error: e.message || "Failed to submit vote" });
   }
 });
 
 // Get game results
 app.get("/api/games/:id/results", async (req, res) => {
-  const g = await Game.findById(req.params.id);
-  const votes = await Vote.find({ gameId: g._id });
-  
-  const tally = (field) =>
-    Object.entries(
-      votes.reduce((m, v) => ((m[v[field].player] = (m[v[field].player] || 0) + 1), m), {})
-    )
-    .map(([player, count]) => ({ player, count }))
-    .sort((a, b) => b.count - a.count);
+ const game = await Game.findById(req.params.id);
+  if (!game) {
+    return res.status(404).json({ error: "Game not found" });
+  }
 
-  // Tally champagne moments
-  const champagneTally = {};
-  votes.forEach(v => {
-    if (v.champagneMoment?.eventId) {
-      const eventId = v.champagneMoment.eventId.toString();
-      champagneTally[eventId] = (champagneTally[eventId] || 0) + 1;
+  const votes = await Vote.find({ gameId: game._id });
+
+  const buildTally = (field) => {
+    const resultsMap = new Map();
+    for (const vote of votes) {
+      const entry = vote[field];
+      const player = entry?.player;
+      if (!player) continue;
+      const trimmedComment =
+        typeof entry.comment === "string" ? entry.comment.trim() : "";
+
+      if (!resultsMap.has(player)) {
+        resultsMap.set(player, { player, count: 0, comments: [] });
+      }
+
+      const data = resultsMap.get(player);
+      data.count += 1;
+      if (trimmedComment) {
+        data.comments.push(trimmedComment);
+      }
     }
-  });
 
-  const champagneMoments = g.champagneMoments.map(cm => ({
-    _id: cm._id,
-    text: cm.text,
-    votes: champagneTally[cm._id.toString()] || 0
-  })).sort((a, b) => b.votes - a.votes);
+  return Array.from(resultsMap.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.player.localeCompare(b.player);
+    });
+  };
 
-  res.json({ 
-    game: g, 
-    totals: { mom: tally("mom"), dod: tally("dod") },
-    champagneMoments
+  const champagneResults = game.champagneMoments.map((moment) => ({
+    _id: moment._id,
+    text: moment.text,
+    votes: 0,
+    comments: [],
+  }));
+
+  const champagneMap = new Map(
+    champagneResults.map((moment) => [moment._id.toString(), moment])
+  );
+
+  for (const vote of votes) {
+    const selection = vote.champagneMoment;
+    const eventId = selection?.eventId?.toString();
+    if (!eventId) continue;
+    const entry = champagneMap.get(eventId);
+    if (!entry) continue;
+
+    entry.votes += 1;
+
+    const trimmedComment =
+      typeof selection.comment === "string" ? selection.comment.trim() : "";
+    if (trimmedComment) {
+      entry.comments.push(trimmedComment);
+    }
+  }
+
+  const sortedChampagneMoments = Array.from(champagneMap.values()).sort(
+    (a, b) => {
+      if (b.votes !== a.votes) return b.votes - a.votes;
+      return a.text.localeCompare(b.text);
+    }
+  );
+
+  const token = req.query.token;
+  const userVote = token
+    ? votes.find((vote) => vote.voter?.token === token)
+    : null;
+
+  const userVotes = userVote
+    ? {
+        mom: userVote.mom?.player
+          ? {
+              player: userVote.mom.player,
+              comment: userVote.mom.comment || "",
+            }
+          : null,
+        dod: userVote.dod?.player
+          ? {
+              player: userVote.dod.player,
+              comment: userVote.dod.comment || "",
+            }
+          : null,
+        champagne: userVote.champagneMoment?.eventId
+          ? {
+              eventId: userVote.champagneMoment.eventId.toString(),
+              comment: userVote.champagneMoment.comment || "",
+              text:
+                champagneMap.get(
+                  userVote.champagneMoment.eventId.toString()
+                )?.text || "",
+            }
+          : null,
+      }
+    : {};
+
+   res.json({
+    game,
+    totals: { mom: buildTally("mom"), dod: buildTally("dod") },
+    champagneMoments: sortedChampagneMoments,
+    userVotes,
   });
 });
 
