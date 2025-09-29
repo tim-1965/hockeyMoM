@@ -253,8 +253,8 @@
               <select
                 value={selectedPlayer}
                 onChange={(e) => setSelectedPlayer(e.target.value)}
-                className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white font-medium text-lg focus:outline-none focus:ring-4"
-                style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                className="w-full rounded-xl border-2 p-4 font-medium text-lg focus:outline-none focus:ring-4 focus:ring-yellow-500/50"
+                style={{borderColor: 'rgba(253, 184, 30, 0.3)', backgroundColor: 'white', color: 'black'}}
               >
                 <option value="">Select your name</option>
                 {players.map((p) => (
