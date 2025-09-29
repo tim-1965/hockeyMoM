@@ -378,8 +378,9 @@
         const hasVotedDod = results?.userVotes?.dod || false;
         const hasVotedChampagne = results?.userVotes?.champagne || false;
 
-        const availableForMom = game.teamSheet.filter(p => p !== playerName);
-        const availableForDod = game.teamSheet.filter(p => p !== playerName);
+        const teamSheet = Array.isArray(game?.teamSheet) ? game.teamSheet : [];
+        const availableForMom = teamSheet.filter(p => p !== playerName);
+        const availableForDod = teamSheet.filter(p => p !== playerName);
 
         async function voteForMom(playerName, comment = "") {
           await submitVote('mom', playerName, comment);
