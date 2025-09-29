@@ -356,6 +356,22 @@
       }
 
       function GamesList({ games, onUpdate }) {
+        const [expandedGame, setExpandedGame] = useState(null);
+        const [gameResults, setGameResults] = useState({});
+
+        async function loadGameResults(gameId) {
+          if (gameResults[gameId]) return; // Already loaded
+          try {
+            const res = await fetch(`/api/games/${gameId}/results`);
+            if (res.ok) {
+              const data = await res.json();
+              setGameResults(prev => ({ ...prev, [gameId]: data }));
+            }
+          } catch (err) {
+            console.error("Failed to load results:", err);
+          }
+        }
+
         async function closeGame(id) {
           if (!confirm("Close this match? Voting will be disabled.")) return;
           await fetch(`/api/admin/games/${id}/close`, { method: "PATCH" });
@@ -380,6 +396,15 @@
           alert("Voting link copied to clipboard!");
         }
 
+        function toggleExpand(gameId) {
+          if (expandedGame === gameId) {
+            setExpandedGame(null);
+          } else {
+            setExpandedGame(gameId);
+            loadGameResults(gameId);
+          }
+        }
+
         return (
           <div className="admin-card p-8">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
@@ -390,43 +415,113 @@
               <p className="text-slate-400 text-center py-8">No matches created yet.</p>
             ) : (
               <div className="space-y-4">
-                {games.map((game) => (
-                  <div key={game._id} className="border rounded-lg p-5 bg-slate-900/50" style={{borderColor: 'rgba(253, 184, 30, 0.2)'}}>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-bold text-white">{game.teamName} vs {game.opponents}</h3>
-                          <span className={`status-badge ${game.status === 'open' ? 'status-open' : 'status-closed'}`}>
-                            {game.status}
-                          </span>
+                {games.map((game) => {
+                  const results = gameResults[game._id];
+                  const isExpanded = expandedGame === game._id;
+                  
+                  return (
+                    <div key={game._id} className="border rounded-lg bg-slate-900/50" style={{borderColor: 'rgba(253, 184, 30, 0.2)'}}>
+                      <div className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-bold text-white">{game.teamName} vs {game.opponents}</h3>
+                              <span className={`status-badge ${game.status === 'open' ? 'status-open' : 'status-closed'}`}>
+                                {game.status}
+                              </span>
+                            </div>
+                            <p className="text-slate-400 text-sm">
+                              {game.date} • {game.voteCount} vote{game.voteCount !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => toggleExpand(game._id)}
+                            className="text-2xl hover:scale-110 transition-transform"
+                            style={{color: '#FDB81E'}}
+                          >
+                            {isExpanded ? '▼' : '▶'}
+                          </button>
                         </div>
-                        <p className="text-slate-400 text-sm">
-                          {game.date} • {game.voteCount} vote{game.voteCount !== 1 ? 's' : ''}
-                        </p>
+
+                        {isExpanded && results && (
+                          <div className="mt-4 pt-4 border-t space-y-4" style={{borderColor: 'rgba(253, 184, 30, 0.2)'}}>
+                            {/* Man of the Match Results */}
+                            <div>
+                              <h4 className="text-sm font-bold mb-2" style={{color: '#FDB81E'}}>Man of the Match</h4>
+                              {results.totals?.mom?.length > 0 ? (
+                                <div className="space-y-1">
+                                  {results.totals.mom.map((m, idx) => (
+                                    <div key={idx} className="flex justify-between text-sm text-white bg-slate-800/50 px-3 py-2 rounded">
+                                      <span>{m.player}</span>
+                                      <span style={{color: '#FDB81E'}}>{m.count} vote{m.count !== 1 ? 's' : ''}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-slate-500 text-sm">No votes yet</p>
+                              )}
+                            </div>
+
+                            {/* Dick of the Day Results */}
+                            <div>
+                              <h4 className="text-sm font-bold mb-2" style={{color: '#FDB81E'}}>Dick of the Day</h4>
+                              {results.totals?.dod?.length > 0 ? (
+                                <div className="space-y-1">
+                                  {results.totals.dod.map((d, idx) => (
+                                    <div key={idx} className="flex justify-between text-sm text-white bg-slate-800/50 px-3 py-2 rounded">
+                                      <span>{d.player}</span>
+                                      <span style={{color: '#FDB81E'}}>{d.count} vote{d.count !== 1 ? 's' : ''}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-slate-500 text-sm">No votes yet</p>
+                              )}
+                            </div>
+
+                            {/* Champagne Moments Results */}
+                            <div>
+                              <h4 className="text-sm font-bold mb-2" style={{color: '#FDB81E'}}>Champagne Moments</h4>
+                              {results.champagneMoments?.length > 0 ? (
+                                <div className="space-y-1">
+                                  {results.champagneMoments.map((cm, idx) => (
+                                    <div key={idx} className="flex justify-between text-sm text-white bg-slate-800/50 px-3 py-2 rounded">
+                                      <span className="flex-1 pr-4">{cm.text}</span>
+                                      <span style={{color: '#FDB81E'}} className="whitespace-nowrap">{cm.votes} vote{cm.votes !== 1 ? 's' : ''}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-slate-500 text-sm">No moments yet</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          <button onClick={() => copyLink(game._id)} className="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
+                            📋 Copy Link
+                          </button>
+                          {game.status === 'open' ? (
+                            <button onClick={() => closeGame(game._id)} className="btn-danger px-4 py-2 rounded-lg text-sm font-semibold">
+                              🔒 Close Match
+                            </button>
+                          ) : (
+                            <button onClick={() => reopenGame(game._id)} className="btn-success px-4 py-2 rounded-lg text-sm font-semibold">
+                              🔓 Reopen Match
+                            </button>
+                          )}
+                          <button onClick={() => deleteGame(game._id)} className="btn-danger px-4 py-2 rounded-lg text-sm font-semibold">
+                            🗑️ Delete
+                          </button>
+                          <a href={`/?gameId=${game._id}`} target="_blank" className="btn-primary px-4 py-2 rounded-lg text-sm font-semibold inline-block">
+                            👁️ View
+                          </a>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => copyLink(game._id)} className="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                        📋 Copy Link
-                      </button>
-                      {game.status === 'open' ? (
-                        <button onClick={() => closeGame(game._id)} className="btn-danger px-4 py-2 rounded-lg text-sm font-semibold">
-                          🔒 Close Match
-                        </button>
-                      ) : (
-                        <button onClick={() => reopenGame(game._id)} className="btn-success px-4 py-2 rounded-lg text-sm font-semibold">
-                          🔓 Reopen Match
-                        </button>
-                      )}
-                      <button onClick={() => deleteGame(game._id)} className="btn-danger px-4 py-2 rounded-lg text-sm font-semibold">
-                        🗑️ Delete
-                      </button>
-                      <a href={`/?gameId=${game._id}`} target="_blank" className="btn-primary px-4 py-2 rounded-lg text-sm font-semibold inline-block">
-                        👁️ View
-                      </a>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
