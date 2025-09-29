@@ -5,6 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import session from "express-session";
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,17 @@ const app = express();
 app.use(express.json());
 app.use(morgan("tiny"));
 app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
+
+// Session middleware for admin authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'hockey-voting-secret-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 await mongoose.connect(process.env.MONGO_URI, { dbName: "hockey" });
 
@@ -27,6 +39,8 @@ const Game = mongoose.model(
     clubName: { type: String, default: "Guildford Hockey Club" },
     teamSheet: [String],
     champagneMoments: [ChampagneMoment],
+    status: { type: String, default: "open", enum: ["open", "closed"] },
+    createdAt: { type: Date, default: Date.now },
   })
 );
 
@@ -42,6 +56,39 @@ const Vote = mongoose.model(
 );
 
 app.get("/api/health", (_, r) => r.json({ ok: true }));
+
+// Admin authentication middleware
+function requireAuth(req, res, next) {
+  if (req.session.isAdmin) {
+    next();
+  } else {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+}
+
+// Admin login
+app.post("/api/admin/login", (req, res) => {
+  const { password } = req.body;
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+  
+  if (password === adminPassword) {
+    req.session.isAdmin = true;
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: "Invalid password" });
+  }
+});
+
+// Admin logout
+app.post("/api/admin/logout", (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
+});
+
+// Check admin session
+app.get("/api/admin/check", (req, res) => {
+  res.json({ isAuthenticated: !!req.session.isAdmin });
+});
 
 app.post("/api/games", async (req, res) => {
   const { date, opponents, teamSheet = [], champagneMoments = [] } = req.body;
@@ -66,6 +113,11 @@ app.post("/api/games/:id/votes", async (req, res) => {
   try {
     const g = await Game.findById(req.params.id);
     if (!g) return res.status(404).json({ error: "Game not found" });
+    
+    // Check if game is closed
+    if (g.status === "closed") {
+      return res.status(403).json({ error: "This match is closed. Voting has ended." });
+    }
 
     // Handle new champagne moment
     if (req.body.champagneMoment?.textIfNew) {

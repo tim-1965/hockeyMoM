@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hockey Match Voting</title>
+    <title>Guildford Hockey Club - Match Voting</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -18,10 +18,16 @@
       rel="stylesheet"
     />
     <style>
+      :root {
+        --maroon: #8B1538;
+        --gold: #FDB81E;
+        --navy: #1e3a5f;
+      }
+      
       body {
         -webkit-tap-highlight-color: transparent;
         font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        background: linear-gradient(135deg, #0c0a1f 0%, #1a1335 25%, #2d1b69 50%, #1a1335 75%, #0c0a1f 100%);
+        background: linear-gradient(135deg, #0f0a1f 0%, #1a0f2e 25%, #2d1538 50%, #1a0f2e 75%, #0f0a1f 100%);
         min-height: 100vh;
         color: white !important;
       }
@@ -39,14 +45,14 @@
       }
       
       .glass-card {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(30, 41, 59, 0.3) 100%);
+        background: linear-gradient(135deg, rgba(139, 21, 56, 0.15) 0%, rgba(30, 58, 95, 0.15) 100%);
         backdrop-filter: blur(25px);
-        border: 1px solid rgba(148, 163, 184, 0.2);
+        border: 1px solid rgba(253, 184, 30, 0.2);
         border-radius: 1.5rem;
         box-shadow: 
-          0 20px 60px rgba(0, 0, 0, 0.5),
-          0 0 0 1px rgba(255, 255, 255, 0.05),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          0 20px 60px rgba(139, 21, 56, 0.3),
+          0 0 0 1px rgba(253, 184, 30, 0.1),
+          inset 0 1px 0 rgba(253, 184, 30, 0.1);
         position: relative;
         overflow: hidden;
       }
@@ -58,19 +64,19 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        background: linear-gradient(90deg, transparent, rgba(253, 184, 30, 0.6), transparent);
       }
       
-      .animated-bg {
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-        background-size: 400% 400%;
-        animation: gradientShift 8s ease infinite;
+      .maroon-gradient {
+        background: linear-gradient(135deg, #8B1538 0%, #a91d47 100%);
       }
       
-      @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+      .gold-gradient {
+        background: linear-gradient(135deg, #FDB81E 0%, #ffd700 100%);
+      }
+      
+      .club-gradient {
+        background: linear-gradient(135deg, #8B1538 0%, #FDB81E 50%, #1e3a5f 100%);
       }
       
       .floating {
@@ -87,8 +93,8 @@
       }
       
       @keyframes pulseGlow {
-        0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-        50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+        0%, 100% { box-shadow: 0 0 20px rgba(253, 184, 30, 0.4); }
+        50% { box-shadow: 0 0 40px rgba(253, 184, 30, 0.8); }
       }
       
       .hover-lift {
@@ -97,26 +103,14 @@
       
       .hover-lift:hover {
         transform: translateY(-4px);
-        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 25px 80px rgba(139, 21, 56, 0.5);
       }
       
       .gradient-text {
-        background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+        background: linear-gradient(135deg, #FDB81E 0%, #ffd700 50%, #FDB81E 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-      }
-      
-      .champion-gradient {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
-      }
-      
-      .dod-gradient {
-        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-      }
-      
-      .mom-gradient {
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
       }
       
       .result-bar {
@@ -132,7 +126,7 @@
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        background: linear-gradient(90deg, transparent, rgba(253, 184, 30, 0.4), transparent);
         animation: shine 2s infinite;
       }
       
@@ -144,8 +138,8 @@
       .neon-border {
         position: relative;
         border: 2px solid transparent;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9)) padding-box,
-                    linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c) border-box;
+        background: linear-gradient(135deg, rgba(139, 21, 56, 0.9), rgba(30, 58, 95, 0.9)) padding-box,
+                    linear-gradient(135deg, #8B1538, #FDB81E, #1e3a5f) border-box;
       }
       
       .magical-hover {
@@ -160,7 +154,7 @@
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        background: linear-gradient(90deg, transparent, rgba(253, 184, 30, 0.2), transparent);
         transition: left 0.5s;
       }
       
@@ -169,15 +163,21 @@
       }
       
       .vote-button {
-        background: linear-gradient(135deg, #10b981, #059669);
-        border: 2px solid #10b981;
+        background: linear-gradient(135deg, #8B1538, #a91d47);
+        border: 2px solid #FDB81E;
         transition: all 0.3s ease;
       }
       
-      .vote-button:hover {
-        background: linear-gradient(135deg, #059669, #047857);
+      .vote-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #a91d47, #8B1538);
         transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        box-shadow: 0 10px 25px rgba(253, 184, 30, 0.4);
+      }
+      
+      .club-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
       }
     </style>
   </head>
@@ -206,6 +206,8 @@
         const [newChampagneText, setNewChampagneText] = useState("");
         const [msg, setMsg] = useState("");
         const [results, setResults] = useState(null);
+
+        const isMatchClosed = game.status === "closed";
 
         useEffect(() => {
           loadResults();
@@ -236,7 +238,7 @@
 
         async function voteForChampagne(eventId = null, newText = null) {
           if (!voter) {
-            setMsg("🚫 Please identify yourself first");
+            setMsg("Please identify yourself first");
             return;
           }
 
@@ -257,13 +259,13 @@
 
           setNewChampagneText("");
           loadResults();
-          setMsg("🥂 Champagne vote cast!");
+          setMsg("Champagne vote cast!");
           setTimeout(() => setMsg(""), 3000);
         }
 
         async function submitVote(type, playerName) {
           if (!voter) {
-            setMsg("🚫 Please identify yourself first");
+            setMsg("Please identify yourself first");
             return;
           }
 
@@ -285,7 +287,7 @@
             if (type === 'dod') setNewDodPlayer("");
             setComment("");
             loadResults();
-            setMsg(`${type === 'mom' ? '👑' : '💩'} Vote cast for ${playerName}!`);
+            setMsg(`Vote cast for ${playerName}!`);
             setTimeout(() => setMsg(""), 3000);
           }
         }
@@ -311,7 +313,7 @@
         if (!results) {
           return (
             <div className="glass-card p-8 text-center">
-              <div className="animated-bg w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+              <div className="club-gradient w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
                 ⚡
               </div>
               <p className="text-white font-medium">Loading match data...</p>
@@ -323,59 +325,73 @@
           <div className="space-y-8">
             {/* Header */}
             <div className="glass-card p-8 hover-lift">
+              {isMatchClosed && (
+                <div className="mb-6 p-4 rounded-xl bg-red-500/20 border-2 border-red-500/40 text-center">
+                  <p className="text-red-300 font-bold text-lg">This Match is Closed</p>
+                  <p className="text-red-200 text-sm mt-1">Voting has ended. View the final results below.</p>
+                </div>
+              )}
+              
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-full champion-gradient flex items-center justify-center text-2xl animate-pulse">
+                    <div className="w-12 h-12 rounded-full maroon-gradient flex items-center justify-center text-2xl">
                       🏒
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-emerald-400 font-bold">Live Voting</p>
+                      <p className="text-xs uppercase tracking-[0.3em] font-bold" style={{color: '#FDB81E'}}>
+                        {isMatchClosed ? "Final Results" : "Live Voting"}
+                      </p>
                       <h2 className="text-3xl font-black leading-tight gradient-text">
                         {game.teamName || "Hockey Team"}
                       </h2>
                     </div>
                   </div>
                   <p className="text-white flex items-center gap-2">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                    {game.date} • vs {game.opponents}
+                    <span className="w-2 h-2 rounded-full animate-pulse" style={{backgroundColor: '#FDB81E'}}></span>
+                    {game.date} vs {game.opponents}
                   </p>
                 </div>
                 <div className="neon-border rounded-full px-4 py-2">
-                  <span className="text-xs font-bold text-emerald-300">🔒 Secure</span>
+                  <span className="text-xs font-bold" style={{color: '#FDB81E'}}>
+                    {isMatchClosed ? "Closed" : "Secure"}
+                  </span>
                 </div>
               </div>
 
               {/* Voter Identification */}
-              <div className="mt-8 neon-border rounded-2xl p-6">
-                <label className="block text-sm font-bold text-white mb-3 flex items-center gap-2">
-                  <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                  Identify Yourself *
-                </label>
-                <select
-                  value={voter}
-                  onChange={(e) => setVoter(e.target.value)}
-                  className="w-full rounded-xl border-2 border-emerald-500/30 bg-slate-900/90 p-4 text-white font-medium shadow-2xl focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/40 transition-all duration-300"
-                  required
-                >
-                  <option value="">🎯 Select your name</option>
-                  {game.teamSheet.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </div>
+              {!isMatchClosed && (
+                <div className="mt-8 neon-border rounded-2xl p-6">
+                  <label className="block text-sm font-bold text-white mb-3 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full animate-pulse" style={{backgroundColor: '#8B1538'}}></span>
+                    Identify Yourself *
+                  </label>
+                  <select
+                    value={voter}
+                    onChange={(e) => setVoter(e.target.value)}
+                    className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white font-medium shadow-2xl focus:outline-none focus:ring-4 transition-all duration-300"
+                    style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                    required
+                  >
+                    <option value="">Select your name</option>
+                    {game.teamSheet.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {msg && (
-                <div className="mt-6 p-4 rounded-xl font-bold text-center bg-emerald-500/20 text-emerald-300 border-2 border-emerald-500/40">
+                <div className="mt-6 p-4 rounded-xl font-bold text-center border-2" style={{backgroundColor: 'rgba(253, 184, 30, 0.2)', color: '#FDB81E', borderColor: 'rgba(253, 184, 30, 0.4)'}}>
                   {msg}
                 </div>
               )}
             </div>
 
             {/* Man of the Match */}
-            <div className="glass-card p-8 border-emerald-500/20 hover-lift">
-              <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-emerald-400 mb-6 flex items-center gap-3">
-                <span className="w-10 h-10 mom-gradient rounded-full flex items-center justify-center text-xl">👑</span>
+            <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(139, 21, 56, 0.3)'}}>
+              <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3" style={{color: '#FDB81E'}}>
+                <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">👑</span>
                 Man of the Match
               </h3>
               
@@ -389,14 +405,14 @@
                       <div key={m.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
                           <div className="flex items-center gap-3">
-                            <span className="font-bold text-white text-lg">👑 {m.player}</span>
-                            <span className="text-emerald-400 font-black">
+                            <span className="font-bold text-white text-lg">{m.player}</span>
+                            <span className="font-black" style={{color: '#FDB81E'}}>
                               {m.count} vote{m.count === 1 ? "" : "s"}
                             </span>
                           </div>
                           <button
                             onClick={() => voteForMom(m.player)}
-                            disabled={!voter}
+                            disabled={!voter || isMatchClosed}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Vote
@@ -404,47 +420,50 @@
                         </div>
                         <div className="h-3 bg-slate-800 relative overflow-hidden">
                           <div
-                            className="h-full result-bar text-emerald-400"
-                            style={{ width: `${Math.max(percentage, 10)}%` }}
+                            className="h-full result-bar"
+                            style={{ width: `${Math.max(percentage, 10)}%`, color: '#FDB81E' }}
                           ></div>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <p className="text-white text-center py-8 font-medium">🏒 No nominees yet - be the first!</p>
+                  <p className="text-white text-center py-8 font-medium">No nominees yet - be the first!</p>
                 )}
               </div>
 
               {/* Add New Nominee */}
-              <div className="neon-border rounded-xl p-6 bg-slate-800/30">
-                <h4 className="text-lg font-bold text-white mb-4">➕ Nominate New Player</h4>
-                <div className="flex gap-3">
-                  <select
-                    value={newMomPlayer}
-                    onChange={(e) => setNewMomPlayer(e.target.value)}
-                    className="flex-1 rounded-xl border-2 border-emerald-400/60 bg-slate-900/90 p-3 text-white font-medium"
-                  >
-                    <option value="">⭐ Select player to nominate</option>
-                    {availableForMom.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={addNewMom}
-                    disabled={!voter || !newMomPlayer}
-                    className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Nominate
-                  </button>
+              {!isMatchClosed && (
+                <div className="neon-border rounded-xl p-6 bg-slate-800/30">
+                  <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
+                  <div className="flex gap-3">
+                    <select
+                      value={newMomPlayer}
+                      onChange={(e) => setNewMomPlayer(e.target.value)}
+                      className="flex-1 rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                    >
+                      <option value="">Select player to nominate</option>
+                      {availableForMom.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={addNewMom}
+                      disabled={!voter || !newMomPlayer}
+                      className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Nominate
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Dick of the Day */}
-            <div className="glass-card p-8 border-rose-500/20 hover-lift">
-              <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-rose-400 mb-6 flex items-center gap-3">
-                <span className="w-10 h-10 dod-gradient rounded-full flex items-center justify-center text-xl">💩</span>
+            <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(139, 21, 56, 0.3)'}}>
+              <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3" style={{color: '#FDB81E'}}>
+                <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">💩</span>
                 Dick of the Day
               </h3>
               
@@ -458,62 +477,65 @@
                       <div key={d.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
                           <div className="flex items-center gap-3">
-                            <span className="font-bold text-white text-lg">💩 {d.player}</span>
-                            <span className="text-rose-400 font-black">
+                            <span className="font-bold text-white text-lg">{d.player}</span>
+                            <span className="font-black" style={{color: '#FDB81E'}}>
                               {d.count} vote{d.count === 1 ? "" : "s"}
                             </span>
                           </div>
                           <button
                             onClick={() => voteForDod(d.player)}
-                            disabled={!voter}
-                            className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-rose-500 to-red-600 border-rose-500"
+                            disabled={!voter || isMatchClosed}
+                            className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Vote
                           </button>
                         </div>
                         <div className="h-3 bg-slate-800 relative overflow-hidden">
                           <div
-                            className="h-full result-bar text-rose-400"
-                            style={{ width: `${Math.max(percentage, 10)}%` }}
+                            className="h-full result-bar"
+                            style={{ width: `${Math.max(percentage, 10)}%`, color: '#8B1538' }}
                           ></div>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <p className="text-white text-center py-8 font-medium">🎯 No nominations yet!</p>
+                  <p className="text-white text-center py-8 font-medium">No nominations yet!</p>
                 )}
               </div>
 
               {/* Add New Nominee */}
-              <div className="neon-border rounded-xl p-6 bg-slate-800/30">
-                <h4 className="text-lg font-bold text-white mb-4">➕ Nominate New Player</h4>
-                <div className="flex gap-3">
-                  <select
-                    value={newDodPlayer}
-                    onChange={(e) => setNewDodPlayer(e.target.value)}
-                    className="flex-1 rounded-xl border-2 border-rose-400/60 bg-slate-900/90 p-3 text-white font-medium"
-                  >
-                    <option value="">🎯 Select player to nominate</option>
-                    {availableForDod.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={addNewDod}
-                    disabled={!voter || !newDodPlayer}
-                    className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-rose-500 to-red-600 border-rose-500"
-                  >
-                    Nominate
-                  </button>
+              {!isMatchClosed && (
+                <div className="neon-border rounded-xl p-6 bg-slate-800/30">
+                  <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
+                  <div className="flex gap-3">
+                    <select
+                      value={newDodPlayer}
+                      onChange={(e) => setNewDodPlayer(e.target.value)}
+                      className="flex-1 rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
+                      style={{borderColor: 'rgba(139, 21, 56, 0.6)'}}
+                    >
+                      <option value="">Select player to nominate</option>
+                      {availableForDod.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={addNewDod}
+                      disabled={!voter || !newDodPlayer}
+                      className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Nominate
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Champagne Moments */}
-            <div className="glass-card p-8 border-amber-500/20 hover-lift">
-              <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-amber-400 mb-6 flex items-center gap-3">
-                <span className="w-10 h-10 champion-gradient rounded-full flex items-center justify-center text-xl floating">🥂</span>
+            <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}>
+              <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3" style={{color: '#FDB81E'}}>
+                <span className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center text-xl floating">🥂</span>
                 Champagne Moments
               </h3>
               
@@ -529,24 +551,24 @@
                           <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex-1">
                               <span className="text-white font-medium leading-relaxed">
-                                🥂 {cm.text}
+                                {cm.text}
                               </span>
-                              <div className="text-amber-400 font-black text-sm mt-1">
+                              <div className="font-black text-sm mt-1" style={{color: '#FDB81E'}}>
                                 {cm.votes} vote{cm.votes === 1 ? "" : "s"}
                               </div>
                             </div>
                             <button
                               onClick={() => voteForChampagne(cm._id)}
-                              disabled={!voter}
-                              className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-yellow-600 border-amber-500"
+                              disabled={!voter || isMatchClosed}
+                              className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Vote
                             </button>
                           </div>
                           <div className="h-3 bg-slate-800 rounded-full relative overflow-hidden">
                             <div
-                              className="h-full result-bar text-amber-400 rounded-full"
-                              style={{ width: `${Math.max(percentage, 10)}%` }}
+                              className="h-full result-bar rounded-full"
+                              style={{ width: `${Math.max(percentage, 10)}%`, color: '#FDB81E' }}
                             ></div>
                           </div>
                         </div>
@@ -554,31 +576,34 @@
                     );
                   })
                 ) : (
-                  <p className="text-white text-center py-8 font-medium">🥂 No magical moments captured yet!</p>
+                  <p className="text-white text-center py-8 font-medium">No magical moments captured yet!</p>
                 )}
               </div>
 
               {/* Add New Moment */}
-              <div className="neon-border rounded-xl p-6 bg-slate-800/30">
-                <h4 className="text-lg font-bold text-white mb-4">✨ Add New Champagne Moment</h4>
-                <div className="space-y-3">
-                  <textarea
-                    placeholder="🥂 Describe the magical moment (up to 100 characters)"
-                    value={newChampagneText}
-                    onChange={(e) => setNewChampagneText(e.target.value)}
-                    maxLength={100}
-                    className="w-full rounded-xl border-2 border-amber-400/60 bg-slate-900/90 p-4 text-white placeholder-slate-400 font-medium"
-                    rows={3}
-                  />
-                  <button
-                    onClick={addNewChampagne}
-                    disabled={!voter || !newChampagneText.trim()}
-                    className="vote-button w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-yellow-600 border-amber-500"
-                  >
-                    Add Moment
-                  </button>
+              {!isMatchClosed && (
+                <div className="neon-border rounded-xl p-6 bg-slate-800/30">
+                  <h4 className="text-lg font-bold text-white mb-4">Add New Champagne Moment</h4>
+                  <div className="space-y-3">
+                    <textarea
+                      placeholder="Describe the magical moment (up to 100 characters)"
+                      value={newChampagneText}
+                      onChange={(e) => setNewChampagneText(e.target.value)}
+                      maxLength={100}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                      rows={3}
+                    />
+                    <button
+                      onClick={addNewChampagne}
+                      disabled={!voter || !newChampagneText.trim()}
+                      className="vote-button w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add Moment
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         );
@@ -605,7 +630,7 @@
           return (
             <div className="flex min-h-screen items-center justify-center">
               <div className="text-center">
-                <div className="animated-bg w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl floating">
+                <div className="club-gradient w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl floating">
                   🏒
                 </div>
                 <p className="text-white font-bold text-xl">Loading your match...</p>
@@ -632,23 +657,33 @@
           <div className="relative min-h-screen overflow-hidden">
             {/* Background Effects */}
             <div className="fixed inset-0 pointer-events-none">
-              <div className="absolute top-[-20%] left-[-20%] w-96 h-96 rounded-full bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-3xl floating"></div>
-              <div className="absolute bottom-[-20%] right-[-20%] w-96 h-96 rounded-full bg-gradient-to-r from-blue-600/30 to-cyan-600/30 blur-3xl floating" style={{animationDelay: '-3s'}}></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-gradient-to-r from-emerald-600/20 to-teal-600/20 blur-3xl floating" style={{animationDelay: '-1.5s'}}></div>
+              <div className="absolute top-[-20%] left-[-20%] w-96 h-96 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(139,21,56,0.3) 0%, transparent 70%)'}}></div>
+              <div className="absolute bottom-[-20%] right-[-20%] w-96 h-96 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(30,58,95,0.3) 0%, transparent 70%)', animationDelay: '-3s'}}></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(253,184,30,0.2) 0%, transparent 70%)', animationDelay: '-1.5s'}}></div>
             </div>
             
             <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 pb-12 pt-8">
               <header className="text-center mb-4">
                 <div className="flex items-center justify-center gap-4 mb-4">
-                  <div className="w-16 h-16 champion-gradient rounded-full flex items-center justify-center text-3xl floating">
+                  {/* Logo placeholder - add your logo image here */}
+                  <img 
+                    src="/logo.png" 
+                    alt="Guildford Hockey Club" 
+                    className="club-logo"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextElementSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div className="w-16 h-16 club-gradient rounded-full items-center justify-center text-3xl floating" style={{display: 'none'}}>
                     🏒
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.4em] text-emerald-400/80 font-bold">
+                    <p className="text-xs uppercase tracking-[0.4em] font-bold" style={{color: '#FDB81E'}}>
                       Guildford Hockey Club
                     </p>
                     <h1 className="text-5xl font-black gradient-text leading-tight">
-                      Live Match Voting
+                      Match Voting
                     </h1>
                   </div>
                 </div>
@@ -661,7 +696,7 @@
               
               <footer className="pt-8 text-center">
                 <p className="text-xs text-white font-medium">
-                  Built for modern club culture • Secure • Mobile ready ⚡
+                  Guildford Hockey Club - #teamwork #passion #creativity #respect
                 </p>
               </footer>
             </div>

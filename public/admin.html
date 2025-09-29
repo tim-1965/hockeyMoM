@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guildford Hockey Club - Admin Panel</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --maroon: #8B1538;
+        --gold: #FDB81E;
+        --navy: #1e3a5f;
+      }
+      
+      body {
+        -webkit-tap-highlight-color: transparent;
+        font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, #0f0a1f 0%, #1a0f2e 25%, #2d1538 50%, #1a0f2e 75%, #0f0a1f 100%);
+        min-height: 100vh;
+        color: white !important;
+      }
+      
+      * {
+        color: inherit;
+      }
+      
+      input, select, textarea, option {
+        color: white !important;
+      }
+      
+      input::placeholder, textarea::placeholder {
+        color: #94a3b8 !important;
+      }
+      
+      .admin-card {
+        background: linear-gradient(135deg, rgba(139, 21, 56, 0.15) 0%, rgba(30, 58, 95, 0.15) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(253, 184, 30, 0.3);
+        border-radius: 1rem;
+        box-shadow: 0 10px 40px rgba(139, 21, 56, 0.4);
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #8B1538, #a91d47);
+        border: 2px solid #FDB81E;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #a91d47, #8B1538);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(253, 184, 30, 0.4);
+      }
+      
+      .btn-danger {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        border: 2px solid #ef4444;
+      }
+      
+      .btn-danger:hover:not(:disabled) {
+        background: linear-gradient(135deg, #b91c1c, #991b1b);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+      }
+      
+      .btn-success {
+        background: linear-gradient(135deg, #059669, #047857);
+        border: 2px solid #10b981;
+      }
+      
+      .btn-success:hover:not(:disabled) {
+        background: linear-gradient(135deg, #047857, #065f46);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+      }
+      
+      .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      
+      .status-open {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+      }
+      
+      .status-closed {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+      }
+      
+      .club-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-white p-8">
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useEffect, useState } = React;
+
+      function LoginForm({ onLogin }) {
+        const [password, setPassword] = useState("");
+        const [error, setError] = useState("");
+        const [loading, setLoading] = useState(false);
+
+        async function handleLogin(e) {
+          e.preventDefault();
+          setError("");
+          setLoading(true);
+          
+          const res = await fetch("/api/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          
+          setLoading(false);
+          
+          if (res.ok) {
+            onLogin();
+          } else {
+            setError("Invalid password");
+            setPassword("");
+          }
+        }
+
+        return (
+          <div className="flex min-h-screen items-center justify-center">
+            <div className="admin-card p-8 w-full max-w-md">
+              <div className="text-center mb-8">
+                <img 
+                  src="/logo.png" 
+                  alt="Guildford Hockey Club" 
+                  className="club-logo mx-auto mb-4"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto mb-4" style={{background: 'linear-gradient(135deg, #8B1538, #FDB81E, #1e3a5f)', display: 'none'}}>
+                  🔒
+                </div>
+                <h1 className="text-3xl font-black mb-2" style={{color: '#FDB81E'}}>Admin Login</h1>
+                <p className="text-slate-400">Guildford Hockey Club</p>
+              </div>
+              
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter admin password"
+                    className="w-full rounded-lg border bg-slate-900/80 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2"
+                    style={{borderColor: 'rgba(253, 184, 30, 0.3)', '--tw-ring-color': 'rgba(253, 184, 30, 0.4)'}}
+                    required
+                  />
+                </div>
+                
+                {error && (
+                  <p className="text-red-400 text-sm font-medium">{error}</p>
+                )}
+                
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full px-6 py-3 rounded-lg font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Logging in..." : "Login"}
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      function parseTeamCsv(content) {
+        const lines = content
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        if (lines.length <= 1) return [];
+        return lines
+          .slice(1)
+          .map((line) => {
+            const cells = line
+              .split(",")
+              .map((cell) => cell.replace(/^"|"$/g, "").trim());
+            const shirt = cells[1] || "";
+            const first = cells[2] || "";
+            const last = cells[3] || "";
+            const name = [first, last].filter(Boolean).join(" ");
+            if (!name) return "";
+            if (shirt && shirt.toLowerCase() !== "n/a") {
+              return `#${shirt} ${name}`.trim();
+            }
+            return name;
+          })
+          .filter(Boolean);
+      }
+
+      function CreateGameForm({ onCreated }) {
+        const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+        const [opponents, setOpponents] = useState("");
+        const [teamName, setTeamName] = useState("Weysiders");
+        const [clubName, setClubName] = useState("Guildford Hockey Club");
+        const [teamSheet, setTeamSheet] = useState("");
+        const [error, setError] = useState("");
+        const [loading, setLoading] = useState(false);
+        const [success, setSuccess] = useState("");
+
+        function handleImportFile(e) {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setError("");
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              const text = ev.target?.result || "";
+              if (typeof text !== "string") throw new Error("Invalid file content");
+              const players = parseTeamCsv(text);
+              if (!players.length)
+                throw new Error("No players found in uploaded file");
+              setTeamSheet(players.join("\n"));
+            } catch (err) {
+              setError(err.message || "Failed to import file");
+            }
+          };
+          reader.onerror = () => setError("Failed to read file");
+          reader.readAsText(file);
+        }
+
+        async function createGame() {
+          setError("");
+          setSuccess("");
+          const sheet = teamSheet
+            .split(/\n|,/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          if (!date || !opponents || !sheet.length) {
+            setError("Please fill date, opponents, and team sheet.");
+            return;
+          }
+          setLoading(true);
+          const res = await fetch("/api/games", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date,
+              opponents,
+              teamName,
+              clubName,
+              teamSheet: sheet,
+              champagneMoments: [],
+            }),
+          });
+          const json = await res.json();
+          setLoading(false);
+          if (!res.ok) {
+            setError(json.error || "Failed to create game");
+          } else {
+            setSuccess("Match created successfully!");
+            setDate(new Date().toISOString().slice(0, 10));
+            setOpponents("");
+            setTeamSheet("");
+            onCreated(json);
+            setTimeout(() => setSuccess(""), 3000);
+          }
+        }
+
+        return (
+          <div className="admin-card p-8">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <span className="text-3xl">➕</span>
+              <span style={{color: '#FDB81E'}}>Create New Match</span>
+            </h2>
+            <div className="grid gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2">Match Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-lg border bg-slate-900/80 p-3 text-white focus:outline-none focus:ring-2"
+                  style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Opponents</label>
+                <input
+                  placeholder="Opposition team name"
+                  value={opponents}
+                  onChange={(e) => setOpponents(e.target.value)}
+                  className="w-full rounded-lg border bg-slate-900/80 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2"
+                  style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Team Name</label>
+                <input
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  className="w-full rounded-lg border bg-slate-900/80 p-3 text-white focus:outline-none focus:ring-2"
+                  style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Team Sheet</label>
+                <textarea
+                  placeholder="Player names (comma or new line separated)"
+                  value={teamSheet}
+                  onChange={(e) => setTeamSheet(e.target.value)}
+                  className="min-h-[120px] w-full rounded-lg border bg-slate-900/80 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2"
+                  style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Import from CSV</label>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleImportFile}
+                  className="w-full rounded-lg border bg-slate-900/80 p-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-white file:font-semibold"
+                  style={{borderColor: 'rgba(253, 184, 30, 0.3)', '--file-bg': '#8B1538'}}
+                />
+                <style>{`
+                  input[type="file"]::file-selector-button {
+                    background: linear-gradient(135deg, #8B1538, #a91d47);
+                    border: 2px solid #FDB81E;
+                  }
+                  input[type="file"]::file-selector-button:hover {
+                    background: linear-gradient(135deg, #a91d47, #8B1538);
+                  }
+                `}</style>
+              </div>
+              {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
+              {success && <p className="text-sm font-medium" style={{color: '#FDB81E'}}>{success}</p>}
+              <button
+                onClick={createGame}
+                disabled={loading}
+                className="btn-primary px-6 py-3 rounded-lg font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Creating..." : "Create Match"}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      function GamesList({ games, onUpdate }) {
+        async function closeGame(id) {
+          if (!confirm("Close this match? Voting will be disabled.")) return;
+          await fetch(`/api/admin/games/${id}/close`, { method: "PATCH" });
+          onUpdate();
+        }
+
+        async function reopenGame(id) {
+          if (!confirm("Reopen this match? Voting will be re-enabled.")) return;
+          await fetch(`/api/admin/games/${id}/reopen`, { method: "PATCH" });
+          onUpdate();
+        }
+
+        async function deleteGame(id) {
+          if (!confirm("Delete this match? This will remove all votes and cannot be undone!")) return;
+          await fetch(`/api/admin/games/${id}`, { method: "DELETE" });
+          onUpdate();
+        }
+
+        function copyLink(id) {
+          const url = `${window.location.origin}/?gameId=${id}`;
+          navigator.clipboard.writeText(url);
+          alert("Voting link copied to clipboard!");
+        }
+
+        return (
+          <div className="admin-card p-8">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <span className="text-3xl">📋</span>
+              <span style={{color: '#FDB81E'}}>All Matches</span>
+            </h2>
+            {games.length === 0 ? (
+              <p className="text-slate-400 text-center py-8">No matches created yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {games.map((game) => (
+                  <div key={game._id} className="border rounded-lg p-5 bg-slate-900/50" style={{borderColor: 'rgba(253, 184, 30, 0.2)'}}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-xl font-bold">{game.teamName} vs {game.opponents}</h3>
+                          <span className={`status-badge ${game.status === 'open' ? 'status-open' : 'status-closed'}`}>
+                            {game.status}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-sm">
+                          {game.date} • {game.voteCount} vote{game.voteCount !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => copyLink(game._id)}
+                        className="btn-primary px-4 py-2 rounded-lg text-sm font-semibold"
+                      >
+                        📋 Copy Link
+                      </button>
+                      {game.status === 'open' ? (
+                        <button
+                          onClick={() => closeGame(game._id)}
+                          className="btn-danger px-4 py-2 rounded-lg text-sm font-semibold"
+                        >
+                          🔒 Close Match
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => reopenGame(game._id)}
+                          className="btn-success px-4 py-2 rounded-lg text-sm font-semibold"
+                        >
+                          🔓 Reopen Match
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteGame(game._id)}
+                        className="btn-danger px-4 py-2 rounded-lg text-sm font-semibold"
+                      >
+                        🗑️ Delete
+                      </button>
+                      <a
+                        href={`/?gameId=${game._id}`}
+                        target="_blank"
+                        className="btn-primary px-4 py-2 rounded-lg text-sm font-semibold inline-block"
+                      >
+                        👁️ View
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function AdminPanel({ onLogout }) {
+        const [games, setGames] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          loadGames();
+        }, []);
+
+        async function loadGames() {
+          setLoading(true);
+          const res = await fetch("/api/admin/games");
+          if (res.ok) {
+            const data = await res.json();
+            setGames(data);
+          } else if (res.status === 401) {
+            onLogout();
+          }
+          setLoading(false);
+        }
+
+        async function handleLogout() {
+          await fetch("/api/admin/logout", { method: "POST" });
+          onLogout();
+        }
+
+        if (loading) {
+          return (
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{borderColor: '#FDB81E', borderTopColor: 'transparent'}}></div>
+                <p className="text-white font-semibold">Loading admin panel...</p>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="max-w-6xl mx-auto">
+            <header className="mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <img 
+                  src="/logo.png" 
+                  alt="Guildford Hockey Club" 
+                  className="club-logo"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{background: 'linear-gradient(135deg, #8B1538, #FDB81E)', display: 'none'}}>
+                  ⚙️
+                </div>
+                <div>
+                  <h1 className="text-4xl font-black" style={{color: '#FDB81E'}}>Admin Panel</h1>
+                  <p className="text-slate-400">Guildford Hockey Club</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="btn-danger px-6 py-3 rounded-lg font-bold text-white"
+              >
+                🚪 Logout
+              </button>
+            </header>
+
+            <div className="grid gap-8 lg:grid-cols-2">
+              <CreateGameForm onCreated={loadGames} />
+              <GamesList games={games} onUpdate={loadGames} />
+            </div>
+
+            <footer className="mt-12 text-center text-slate-500 text-sm">
+              Guildford Hockey Club • #teamwork #passion #creativity #respect
+            </footer>
+          </div>
+        );
+      }
+
+      function App() {
+        const [isAuthenticated, setIsAuthenticated] = useState(false);
+        const [checking, setChecking] = useState(true);
+
+        useEffect(() => {
+          checkAuth();
+        }, []);
+
+        async function checkAuth() {
+          const res = await fetch("/api/admin/check");
+          const data = await res.json();
+          setIsAuthenticated(data.isAuthenticated);
+          setChecking(false);
+        }
+
+        if (checking) {
+          return (
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{borderColor: '#FDB81E', borderTopColor: 'transparent'}}></div>
+                <p className="text-white font-semibold">Loading...</p>
+              </div>
+            </div>
+          );
+        }
+
+        return isAuthenticated ? (
+          <AdminPanel onLogout={() => setIsAuthenticated(false)} />
+        ) : (
+          <LoginForm onLogin={() => setIsAuthenticated(true)} />
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
