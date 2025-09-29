@@ -35,6 +35,15 @@ app.use(expressSession({
 await mongoose.connect(process.env.MONGO_URI, { dbName: "hockey" });
 
 const ChampagneMoment = new mongoose.Schema({ text: String }, { _id: true });
+
+const Player = mongoose.model(
+  "Player",
+  new mongoose.Schema({
+    name: { type: String, required: true, unique: true },
+    createdAt: { type: Date, default: Date.now },
+  })
+);
+
 const Game = mongoose.model(
   "Game",
   new mongoose.Schema({
@@ -117,6 +126,22 @@ app.post("/api/games", async (req, res) => {
     if (!date || !opponents || !teamSheet.length) {
       console.log("Validation failed:", { date: !!date, opponents: !!opponents, teamSheetLength: teamSheet.length });
       return res.status(400).json({ error: "Missing required fields: date, opponents, and team sheet" });
+    }
+    
+    // Add players to master list (without duplicates)
+    for (const playerName of teamSheet) {
+      try {
+        await Player.findOneAndUpdate(
+          { name: playerName },
+          { name: playerName },
+          { upsert: true, new: true }
+        );
+      } catch (err) {
+        // Ignore duplicate key errors
+        if (err.code !== 11000) {
+          console.error("Error adding player:", playerName, err);
+        }
+      }
     }
     
     const game = await Game.create({
@@ -209,12 +234,8 @@ app.get("/api/games/:id/results", async (req, res) => {
 // Get master player list
 app.get("/api/players", async (req, res) => {
   try {
-    const games = await Game.find();
-    const allPlayers = new Set();
-    games.forEach(game => {
-      game.teamSheet.forEach(player => allPlayers.add(player));
-    });
-    res.json(Array.from(allPlayers).sort());
+    const players = await Player.find().sort({ name: 1 });
+    res.json(players.map(p => p.name));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -229,6 +250,25 @@ app.get("/api/games/player/:playerName", async (req, res) => {
       teamSheet: playerName 
     }).sort({ date: -1 });
     res.json(games);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin endpoints - all require authentication
+app.get("/api/admin/players", requireAuth, async (req, res) => {
+  try {
+    const players = await Player.find().sort({ name: 1 });
+    res.json(players);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/admin/players/:id", requireAuth, async (req, res) => {
+  try {
+    await Player.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

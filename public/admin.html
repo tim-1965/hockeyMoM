@@ -375,6 +375,80 @@
         );
       }
 
+      function PlayersList({ onUpdate }) {
+        const [players, setPlayers] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          loadPlayers();
+        }, []);
+
+        async function loadPlayers() {
+          setLoading(true);
+          try {
+            const res = await fetch("/api/admin/players");
+            if (res.ok) {
+              const data = await res.json();
+              setPlayers(data);
+            }
+          } catch (err) {
+            console.error("Failed to load players:", err);
+          }
+          setLoading(false);
+        }
+
+        async function deletePlayer(id, name) {
+          if (!confirm(`Delete ${name} from master list? This will not affect existing games.`)) return;
+          try {
+            await fetch(`/api/admin/players/${id}`, { method: "DELETE" });
+            loadPlayers();
+            if (onUpdate) onUpdate();
+          } catch (err) {
+            console.error("Failed to delete player:", err);
+          }
+        }
+
+        if (loading) {
+          return (
+            <div className="admin-card p-8">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{borderColor: '#FDB81E', borderTopColor: 'transparent'}}></div>
+                <p className="text-white">Loading players...</p>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="admin-card p-8">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <span className="text-3xl">👥</span>
+              <span style={{color: '#FDB81E'}}>Master Player List</span>
+            </h2>
+            <p className="text-slate-400 text-sm mb-4">
+              {players.length} player{players.length !== 1 ? 's' : ''} • Auto-updated when creating games
+            </p>
+            {players.length === 0 ? (
+              <p className="text-slate-400 text-center py-8">No players yet. Create a game to add players.</p>
+            ) : (
+              <div className="grid gap-2 max-h-96 overflow-y-auto">
+                {players.map((player) => (
+                  <div key={player._id} className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border" style={{borderColor: 'rgba(253, 184, 30, 0.2)'}}>
+                    <span className="text-white font-medium">{player.name}</span>
+                    <button
+                      onClick={() => deletePlayer(player._id, player.name)}
+                      className="text-red-400 hover:text-red-300 text-sm font-semibold transition"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
+
       function GamesList({ games, onUpdate }) {
         const [expandedGame, setExpandedGame] = useState(null);
         const [gameResults, setGameResults] = useState({});
@@ -605,8 +679,12 @@
               </button>
             </header>
 
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2 mb-8">
               <CreateGameForm onCreated={loadGames} />
+              <PlayersList onUpdate={loadGames} />
+            </div>
+
+            <div className="mb-8">
               <GamesList games={games} onUpdate={loadGames} />
             </div>
 
