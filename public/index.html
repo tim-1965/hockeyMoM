@@ -44,12 +44,22 @@
       }
       
       option {
-        color: white !important;
-        background-color: #1e293b !important;
+        color: black !important;
+        background-color: white !important;
+      }
+      
+      select {
+        color: black !important;
+        background-color: white !important;
       }
       
       input::placeholder, textarea::placeholder {
-        color: #94a3b8 !important;
+        color: #64748b !important;
+      }
+      
+      input[type="date"] {
+        color: black !important;
+        background-color: white !important;
       }
       
       .glass-card {
@@ -172,6 +182,14 @@
         transform: scale(1.05);
         box-shadow: 0 10px 25px rgba(253, 184, 30, 0.4);
       }
+      
+      .comment-bubble {
+        background: rgba(15, 23, 42, 0.6);
+        border-left: 3px solid rgba(253, 184, 30, 0.5);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+      }
     </style>
   </head>
   <body class="min-h-screen text-white">
@@ -225,7 +243,7 @@
           <div className="glass-card p-8 hover-lift">
             <div className="text-center mb-8">
               <div className="w-16 h-16 club-gradient rounded-full mx-auto mb-4 flex items-center justify-center text-3xl">
-                🏒
+                🏑
               </div>
               <h2 className="text-3xl font-black gradient-text mb-2">Who are you?</h2>
               <p className="text-white">Select your name to view your available matches</p>
@@ -335,8 +353,11 @@
 
       function VotingInterface({ game, playerName, onBack }) {
         const [newMomPlayer, setNewMomPlayer] = useState("");
+        const [momComment, setMomComment] = useState("");
         const [newDodPlayer, setNewDodPlayer] = useState("");
+        const [dodComment, setDodComment] = useState("");
         const [newChampagneText, setNewChampagneText] = useState("");
+        const [champagneComment, setChampagneComment] = useState("");
         const [msg, setMsg] = useState("");
         const [results, setResults] = useState(null);
 
@@ -347,56 +368,36 @@
         }, [game._id]);
 
         const loadResults = () => {
-          fetch(`/api/games/${game._id}/results`)
+          fetch(`/api/games/${game._id}/results?token=${deviceToken}`)
             .then((r) => r.json())
             .then(setResults)
             .catch(() => {});
         };
 
-        const availableForMom = game.teamSheet.filter(p => 
-          p !== playerName && (!results?.totals?.mom?.some(m => m.player === p) || false)
-        );
-        
-        const availableForDod = game.teamSheet.filter(p => 
-          p !== playerName && (!results?.totals?.dod?.some(d => d.player === p) || false)
-        );
+        const hasVotedMom = results?.userVotes?.mom || false;
+        const hasVotedDod = results?.userVotes?.dod || false;
+        const hasVotedChampagne = results?.userVotes?.champagne || false;
 
-        async function voteForMom(playerName) {
-          await submitVote('mom', playerName);
+        const availableForMom = game.teamSheet.filter(p => p !== playerName);
+        const availableForDod = game.teamSheet.filter(p => p !== playerName);
+
+        async function voteForMom(playerName, comment = "") {
+          await submitVote('mom', playerName, comment);
         }
 
-        async function voteForDod(playerName) {
-          await submitVote('dod', playerName);
+        async function voteForDod(playerName, comment = "") {
+          await submitVote('dod', playerName, comment);
         }
 
-        async function voteForChampagne(eventId = null, newText = null) {
+        async function voteForChampagne(eventId = null, newText = null, comment = "") {
           const payload = {
             voter: { name: playerName, token: deviceToken },
+            category: "champagne",
             mom: { player: "temp", comment: "" },
             dod: { player: "temp", comment: "" },
             champagneMoment: newText 
-              ? { textIfNew: newText }
-              : { eventId: eventId }
-          };
-
-          await fetch(`/api/games/${game._id}/votes`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          setNewChampagneText("");
-          loadResults();
-          setMsg("Champagne vote cast!");
-          setTimeout(() => setMsg(""), 3000);
-        }
-
-        async function submitVote(type, player) {
-          const payload = {
-            voter: { name: playerName, token: deviceToken },
-            mom: { player: type === 'mom' ? player : "temp", comment: "" },
-            dod: { player: type === 'dod' ? player : "temp", comment: "" },
-            champagneMoment: { textIfNew: "temp" }
+              ? { textIfNew: newText, comment: comment }
+              : { eventId: eventId, comment: comment }
           };
 
           const res = await fetch(`/api/games/${game._id}/votes`, {
@@ -406,29 +407,67 @@
           });
 
           if (res.ok) {
-            if (type === 'mom') setNewMomPlayer("");
-            if (type === 'dod') setNewDodPlayer("");
+            setNewChampagneText("");
+            setChampagneComment("");
+            loadResults();
+            setMsg("Champagne vote cast!");
+            setTimeout(() => setMsg(""), 3000);
+          } else {
+            const data = await res.json();
+            setMsg(data.error || "Failed to submit vote");
+            setTimeout(() => setMsg(""), 3000);
+          }
+        }
+
+        async function submitVote(type, player, comment = "") {
+          const payload = {
+            voter: { name: playerName, token: deviceToken },
+            category: type,
+            mom: { player: type === 'mom' ? player : "temp", comment: type === 'mom' ? comment : "" },
+            dod: { player: type === 'dod' ? player : "temp", comment: type === 'dod' ? comment : "" },
+            champagneMoment: { textIfNew: "temp", comment: "" }
+          };
+
+          const res = await fetch(`/api/games/${game._id}/votes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            if (type === 'mom') {
+              setNewMomPlayer("");
+              setMomComment("");
+            }
+            if (type === 'dod') {
+              setNewDodPlayer("");
+              setDodComment("");
+            }
             loadResults();
             setMsg(`Vote cast for ${player}!`);
+            setTimeout(() => setMsg(""), 3000);
+          } else {
+            const data = await res.json();
+            setMsg(data.error || "Failed to submit vote");
             setTimeout(() => setMsg(""), 3000);
           }
         }
 
         const addNewMom = () => {
           if (newMomPlayer) {
-            voteForMom(newMomPlayer);
+            voteForMom(newMomPlayer, momComment);
           }
         };
 
         const addNewDod = () => {
           if (newDodPlayer) {
-            voteForDod(newDodPlayer);
+            voteForDod(newDodPlayer, dodComment);
           }
         };
 
         const addNewChampagne = () => {
           if (newChampagneText.trim()) {
-            voteForChampagne(null, newChampagneText.trim());
+            voteForChampagne(null, newChampagneText.trim(), champagneComment);
           }
         };
 
@@ -458,7 +497,7 @@
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 rounded-full maroon-gradient flex items-center justify-center text-2xl">
-                      🏒
+                      🏑
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-[0.3em] font-bold" style={{color: '#FDB81E'}}>
@@ -500,10 +539,17 @@
 
             {/* Man of the Match */}
             <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(139, 21, 56, 0.3)'}}>
-              <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3" style={{color: '#FDB81E'}}>
-                <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">👑</span>
-                Man of the Match
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{color: '#FDB81E'}}>
+                  <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">👑</span>
+                  Man of the Match
+                </h3>
+                {hasVotedMom && !isMatchClosed && (
+                  <span className="text-sm font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                    ✓ Voted
+                  </span>
+                )}
+              </div>
               
               <div className="space-y-4 mb-6">
                 {results?.totals?.mom?.length ? (
@@ -513,10 +559,13 @@
                     return (
                       <div key={m.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
-                          <span className="font-bold text-white text-lg">{m.player}</span>
+                          <div className="flex-1">
+                            <span className="font-bold text-white text-lg">{m.player}</span>
+                            <span className="ml-3 text-sm" style={{color: '#FDB81E'}}>({m.count} vote{m.count !== 1 ? 's' : ''})</span>
+                          </div>
                           <button
-                            onClick={() => voteForMom(m.player)}
-                            disabled={isMatchClosed}
+                            onClick={() => voteForMom(m.player, "")}
+                            disabled={isMatchClosed || hasVotedMom}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Vote
@@ -528,6 +577,16 @@
                             style={{ width: `${Math.max(percentage, 10)}%`, color: '#FDB81E' }}
                           ></div>
                         </div>
+                        {m.comments && m.comments.length > 0 && (
+                          <div className="p-4 bg-slate-900/30 space-y-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments:</p>
+                            {m.comments.map((comment, cidx) => (
+                              <div key={cidx} className="comment-bubble">
+                                <p className="text-sm text-white italic">"{comment}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -536,14 +595,14 @@
                 )}
               </div>
 
-              {!isMatchClosed && (
+              {!isMatchClosed && !hasVotedMom && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
                   <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
-                  <div className="flex gap-3">
+                  <div className="space-y-3">
                     <select
                       value={newMomPlayer}
                       onChange={(e) => setNewMomPlayer(e.target.value)}
-                      className="flex-1 rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
                       style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
                     >
                       <option value="">Select player to nominate</option>
@@ -551,24 +610,40 @@
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
+                    <textarea
+                      placeholder="Add an optional comment..."
+                      value={momComment}
+                      onChange={(e) => setMomComment(e.target.value)}
+                      maxLength={200}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                      rows={2}
+                    />
                     <button
                       onClick={addNewMom}
                       disabled={!newMomPlayer}
-                      className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="vote-button w-full px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Nominate
+                      Submit Vote
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Dick of the Day */}
+            {/* DoD */}
             <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(139, 21, 56, 0.3)'}}>
-              <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3" style={{color: '#FDB81E'}}>
-                <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">💩</span>
-                Dick of the Day
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{color: '#FDB81E'}}>
+                  <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">💩</span>
+                  DoD
+                </h3>
+                {hasVotedDod && !isMatchClosed && (
+                  <span className="text-sm font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                    ✓ Voted
+                  </span>
+                )}
+              </div>
               
               <div className="space-y-4 mb-6">
                 {results?.totals?.dod?.length ? (
@@ -578,10 +653,13 @@
                     return (
                       <div key={d.player + idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="flex items-center justify-between p-4 bg-slate-900/60">
-                          <span className="font-bold text-white text-lg">{d.player}</span>
+                          <div className="flex-1">
+                            <span className="font-bold text-white text-lg">{d.player}</span>
+                            <span className="ml-3 text-sm" style={{color: '#FDB81E'}}>({d.count} vote{d.count !== 1 ? 's' : ''})</span>
+                          </div>
                           <button
-                            onClick={() => voteForDod(d.player)}
-                            disabled={isMatchClosed}
+                            onClick={() => voteForDod(d.player, "")}
+                            disabled={isMatchClosed || hasVotedDod}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Vote
@@ -593,6 +671,16 @@
                             style={{ width: `${Math.max(percentage, 10)}%`, color: '#8B1538' }}
                           ></div>
                         </div>
+                        {d.comments && d.comments.length > 0 && (
+                          <div className="p-4 bg-slate-900/30 space-y-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments:</p>
+                            {d.comments.map((comment, cidx) => (
+                              <div key={cidx} className="comment-bubble">
+                                <p className="text-sm text-white italic">"{comment}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -601,14 +689,14 @@
                 )}
               </div>
 
-              {!isMatchClosed && (
+              {!isMatchClosed && !hasVotedDod && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
                   <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
-                  <div className="flex gap-3">
+                  <div className="space-y-3">
                     <select
                       value={newDodPlayer}
                       onChange={(e) => setNewDodPlayer(e.target.value)}
-                      className="flex-1 rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
                       style={{borderColor: 'rgba(139, 21, 56, 0.6)'}}
                     >
                       <option value="">Select player to nominate</option>
@@ -616,12 +704,21 @@
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
+                    <textarea
+                      placeholder="Add an optional comment..."
+                      value={dodComment}
+                      onChange={(e) => setDodComment(e.target.value)}
+                      maxLength={200}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(139, 21, 56, 0.6)'}}
+                      rows={2}
+                    />
                     <button
                       onClick={addNewDod}
                       disabled={!newDodPlayer}
-                      className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="vote-button w-full px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Nominate
+                      Submit Vote
                     </button>
                   </div>
                 </div>
@@ -630,10 +727,17 @@
 
             {/* Champagne Moments */}
             <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}>
-              <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-3" style={{color: '#FDB81E'}}>
-                <span className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center text-xl floating">🥂</span>
-                Champagne Moments
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{color: '#FDB81E'}}>
+                  <span className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center text-xl floating">🥂</span>
+                  Champagne Moments
+                </h3>
+                {hasVotedChampagne && !isMatchClosed && (
+                  <span className="text-sm font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                    ✓ Voted
+                  </span>
+                )}
+              </div>
               
               <div className="space-y-4 mb-6">
                 {results?.champagneMoments?.length ? (
@@ -644,12 +748,15 @@
                       <div key={cm._id || idx} className="neon-border rounded-xl overflow-hidden">
                         <div className="p-5 bg-slate-900/60">
                           <div className="flex items-start justify-between gap-4 mb-3">
-                            <span className="text-white font-medium leading-relaxed flex-1">
-                              {cm.text}
-                            </span>
+                            <div className="flex-1">
+                              <span className="text-white font-medium leading-relaxed block">
+                                {cm.text}
+                              </span>
+                              <span className="text-sm mt-1 inline-block" style={{color: '#FDB81E'}}>({cm.votes} vote{cm.votes !== 1 ? 's' : ''})</span>
+                            </div>
                             <button
-                              onClick={() => voteForChampagne(cm._id)}
-                              disabled={isMatchClosed}
+                              onClick={() => voteForChampagne(cm._id, null, "")}
+                              disabled={isMatchClosed || hasVotedChampagne}
                               className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Vote
@@ -661,6 +768,16 @@
                               style={{ width: `${Math.max(percentage, 10)}%`, color: '#FDB81E' }}
                             ></div>
                           </div>
+                          {cm.comments && cm.comments.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments:</p>
+                              {cm.comments.map((comment, cidx) => (
+                                <div key={cidx} className="comment-bubble">
+                                  <p className="text-sm text-white italic">"{comment}"</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -670,7 +787,7 @@
                 )}
               </div>
 
-              {!isMatchClosed && (
+              {!isMatchClosed && !hasVotedChampagne && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
                   <h4 className="text-lg font-bold text-white mb-4">Add New Champagne Moment</h4>
                   <div className="space-y-3">
@@ -681,14 +798,23 @@
                       maxLength={100}
                       className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white placeholder-slate-400 font-medium"
                       style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
-                      rows={3}
+                      rows={2}
+                    />
+                    <textarea
+                      placeholder="Add an optional comment..."
+                      value={champagneComment}
+                      onChange={(e) => setChampagneComment(e.target.value)}
+                      maxLength={200}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                      rows={2}
                     />
                     <button
                       onClick={addNewChampagne}
                       disabled={!newChampagneText.trim()}
                       className="vote-button w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add Moment
+                      Submit Vote
                     </button>
                   </div>
                 </div>
@@ -703,14 +829,12 @@
         const [selectedGame, setSelectedGame] = useState(null);
         const id = qs.get("gameId");
         
-        // Legacy support: if gameId in URL, load that game directly
         useEffect(() => {
           if (id) {
             fetch(`/api/games/${id}`)
               .then((r) => r.json())
               .then((game) => {
                 setSelectedGame(game);
-                // Auto-select first player if available
                 if (game.teamSheet && game.teamSheet.length > 0) {
                   setSelectedPlayer(game.teamSheet[0]);
                 }
@@ -738,7 +862,6 @@
 
         return (
           <div className="relative min-h-screen overflow-hidden">
-            {/* Background Effects */}
             <div className="fixed inset-0 pointer-events-none">
               <div className="absolute top-[-20%] left-[-20%] w-96 h-96 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(139,21,56,0.3) 0%, transparent 70%)'}}></div>
               <div className="absolute bottom-[-20%] right-[-20%] w-96 h-96 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(30,58,95,0.3) 0%, transparent 70%)', animationDelay: '-3s'}}></div>
@@ -749,7 +872,7 @@
               <header className="text-center mb-4">
                 <div className="flex items-center justify-center gap-4 mb-4">
                   <div className="w-16 h-16 club-gradient rounded-full flex items-center justify-center text-3xl floating">
-                    🏒
+                    🏑
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.4em] font-bold" style={{color: '#FDB81E'}}>

@@ -33,17 +33,30 @@
       }
       
       input, select, textarea {
-        background-color: rgba(15, 23, 42, 0.9);
-        color: white;
+        background-color: white;
+        color: black !important;
       }
       
       option {
-        color: white;
-        background-color: #1e293b;
+        color: black !important;
+        background-color: white !important;
+      }
+      
+      select {
+        color: black !important;
+        background-color: white !important;
       }
       
       input::placeholder, textarea::placeholder {
-        color: #94a3b8;
+        color: #64748b !important;
+      }
+      
+      input[type="password"],
+      input[type="date"],
+      input[type="text"],
+      input[type="file"] {
+        color: black !important;
+        background-color: white !important;
       }
       
       .admin-card {
@@ -138,7 +151,7 @@
             const res = await fetch("/api/admin/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              credentials: "include", // Important for session cookies
+              credentials: "include",
               body: JSON.stringify({ password }),
             });
             
@@ -182,7 +195,7 @@
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter admin password"
                     autoComplete="current-password"
-                    className="w-full rounded-lg border px-4 py-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2"
+                    className="w-full rounded-lg border px-4 py-4 focus:outline-none focus:ring-2"
                     style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
                     required
                     autoFocus
@@ -318,7 +331,7 @@
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-lg border p-3 text-white focus:outline-none focus:ring-2"
+                  className="w-full rounded-lg border p-3 focus:outline-none focus:ring-2"
                   style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
                 />
               </div>
@@ -328,7 +341,7 @@
                   placeholder="Opposition team name"
                   value={opponents}
                   onChange={(e) => setOpponents(e.target.value)}
-                  className="w-full rounded-lg border p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2"
+                  className="w-full rounded-lg border p-3 focus:outline-none focus:ring-2"
                   style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
                 />
               </div>
@@ -337,7 +350,7 @@
                 <input
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
-                  className="w-full rounded-lg border p-3 text-white focus:outline-none focus:ring-2"
+                  className="w-full rounded-lg border p-3 focus:outline-none focus:ring-2"
                   style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
                 />
               </div>
@@ -347,7 +360,7 @@
                   placeholder="Player names (comma or new line separated)"
                   value={teamSheet}
                   onChange={(e) => setTeamSheet(e.target.value)}
-                  className="min-h-[120px] w-full rounded-lg border p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2"
+                  className="min-h-[120px] w-full rounded-lg border p-3 focus:outline-none focus:ring-2"
                   style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
                 ></textarea>
               </div>
@@ -357,7 +370,7 @@
                   type="file"
                   accept=".csv,text/csv"
                   onChange={handleImportFile}
-                  className="w-full rounded-lg border p-3 text-white"
+                  className="w-full rounded-lg border p-3"
                   style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
                 />
               </div>
@@ -454,7 +467,7 @@
         const [gameResults, setGameResults] = useState({});
 
         async function loadGameResults(gameId) {
-          if (gameResults[gameId]) return; // Already loaded
+          if (gameResults[gameId]) return;
           try {
             const res = await fetch(`/api/games/${gameId}/results`);
             if (res.ok) {
@@ -556,9 +569,9 @@
                               )}
                             </div>
 
-                            {/* Dick of the Day Results */}
+                            {/* DoD Results */}
                             <div>
-                              <h4 className="text-sm font-bold mb-2" style={{color: '#FDB81E'}}>Dick of the Day</h4>
+                              <h4 className="text-sm font-bold mb-2" style={{color: '#FDB81E'}}>DoD</h4>
                               {results.totals?.dod?.length > 0 ? (
                                 <div className="space-y-1">
                                   {results.totals.dod.map((d, idx) => (
