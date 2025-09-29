@@ -27,7 +27,7 @@
       body {
         -webkit-tap-highlight-color: transparent;
         font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        background: linear-gradient(135deg, #0f0a1f 0%, #1a0f2e 25%, #2d1538 50%, #1a0f2e 75%, #0f0a1f 100%);
+        background: linear-gradient(135deg, #0f0a1f 0%, #1a0f2e 25%, #2d1b69 50%, #1a0f2e 75%, #0f0a1f 100%);
         min-height: 100vh;
         color: white !important;
       }
@@ -40,17 +40,9 @@
         color: white !important;
         -webkit-user-select: text !important;
         user-select: text !important;
-      }
-      
-      /* Dark background form elements - keep white text */
-      select.dark-select,
-      input.dark-input,
-      textarea.dark-input {
-        color: white !important;
         background-color: rgba(15, 23, 42, 0.9) !important;
       }
       
-      /* Dropdown options need dark background and white text */
       option {
         color: white !important;
         background-color: #1e293b !important;
@@ -102,15 +94,6 @@
       @keyframes float {
         0%, 100% { transform: translateY(0px); }
         50% { transform: translateY(-20px); }
-      }
-      
-      .pulse-glow {
-        animation: pulseGlow 2s infinite;
-      }
-      
-      @keyframes pulseGlow {
-        0%, 100% { box-shadow: 0 0 20px rgba(253, 184, 30, 0.4); }
-        50% { box-shadow: 0 0 40px rgba(253, 184, 30, 0.8); }
       }
       
       .hover-lift {
@@ -189,12 +172,6 @@
         transform: scale(1.05);
         box-shadow: 0 10px 25px rgba(253, 184, 30, 0.4);
       }
-      
-      .club-logo {
-        width: 80px;
-        height: 80px;
-        object-fit: contain;
-      }
     </style>
   </head>
   <body class="min-h-screen text-white">
@@ -214,9 +191,149 @@
       }
       const deviceToken = getToken();
 
-      function VotingInterface({ game }) {
-        const [voter, setVoter] = useState("");
-        const [comment, setComment] = useState("");
+      function PlayerSelection({ onPlayerSelected }) {
+        const [players, setPlayers] = useState([]);
+        const [selectedPlayer, setSelectedPlayer] = useState("");
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          fetch("/api/players")
+            .then((r) => r.json())
+            .then(setPlayers)
+            .catch(() => {})
+            .finally(() => setLoading(false));
+        }, []);
+
+        function handleSubmit() {
+          if (selectedPlayer) {
+            onPlayerSelected(selectedPlayer);
+          }
+        }
+
+        if (loading) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="club-gradient w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <p className="text-white font-medium">Loading players...</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="glass-card p-8 hover-lift">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 club-gradient rounded-full mx-auto mb-4 flex items-center justify-center text-3xl">
+                🏒
+              </div>
+              <h2 className="text-3xl font-black gradient-text mb-2">Who are you?</h2>
+              <p className="text-white">Select your name to view your available matches</p>
+            </div>
+
+            <div className="space-y-6">
+              <select
+                value={selectedPlayer}
+                onChange={(e) => setSelectedPlayer(e.target.value)}
+                className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white font-medium text-lg focus:outline-none focus:ring-4"
+                style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+              >
+                <option value="">Select your name</option>
+                {players.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleSubmit}
+                disabled={!selectedPlayer}
+                className="vote-button w-full py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      function GameSelection({ playerName, onGameSelected, onBack }) {
+        const [games, setGames] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          fetch(`/api/games/player/${encodeURIComponent(playerName)}`)
+            .then((r) => r.json())
+            .then(setGames)
+            .catch(() => {})
+            .finally(() => setLoading(false));
+        }, [playerName]);
+
+        if (loading) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="club-gradient w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <p className="text-white font-medium">Loading your matches...</p>
+            </div>
+          );
+        }
+
+        if (games.length === 0) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚠️
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">No Available Matches</h3>
+              <p className="text-slate-400 mb-6">There are no open matches for {playerName}</p>
+              <button onClick={onBack} className="vote-button px-6 py-3 rounded-xl text-white font-bold">
+                Back to Player Selection
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-6">
+            <div className="glass-card p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm" style={{color: '#FDB81E'}}>Logged in as</p>
+                  <h3 className="text-xl font-bold text-white">{playerName}</h3>
+                </div>
+                <button onClick={onBack} className="text-slate-400 hover:text-white transition">
+                  Change Player
+                </button>
+              </div>
+            </div>
+
+            <div className="glass-card p-8 hover-lift">
+              <h2 className="text-2xl font-black gradient-text mb-6">Select a Match to Vote</h2>
+              <div className="space-y-3">
+                {games.map((game) => (
+                  <button
+                    key={game._id}
+                    onClick={() => onGameSelected(game)}
+                    className="w-full text-left p-4 rounded-xl border-2 bg-slate-900/50 hover:bg-slate-800/70 transition magical-hover"
+                    style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-lg font-bold text-white">{game.teamName} vs {game.opponents}</h4>
+                        <p className="text-sm text-slate-400">{game.date}</p>
+                      </div>
+                      <span className="text-2xl">▶</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function VotingInterface({ game, playerName, onBack }) {
         const [newMomPlayer, setNewMomPlayer] = useState("");
         const [newDodPlayer, setNewDodPlayer] = useState("");
         const [newChampagneText, setNewChampagneText] = useState("");
@@ -237,11 +354,11 @@
         };
 
         const availableForMom = game.teamSheet.filter(p => 
-          p !== voter && (!results?.totals?.mom?.some(m => m.player === p) || false)
+          p !== playerName && (!results?.totals?.mom?.some(m => m.player === p) || false)
         );
         
         const availableForDod = game.teamSheet.filter(p => 
-          p !== voter && (!results?.totals?.dod?.some(d => d.player === p) || false)
+          p !== playerName && (!results?.totals?.dod?.some(d => d.player === p) || false)
         );
 
         async function voteForMom(playerName) {
@@ -253,13 +370,8 @@
         }
 
         async function voteForChampagne(eventId = null, newText = null) {
-          if (!voter) {
-            setMsg("Please identify yourself first");
-            return;
-          }
-
           const payload = {
-            voter: { name: voter, token: deviceToken },
+            voter: { name: playerName, token: deviceToken },
             mom: { player: "temp", comment: "" },
             dod: { player: "temp", comment: "" },
             champagneMoment: newText 
@@ -279,16 +391,11 @@
           setTimeout(() => setMsg(""), 3000);
         }
 
-        async function submitVote(type, playerName) {
-          if (!voter) {
-            setMsg("Please identify yourself first");
-            return;
-          }
-
+        async function submitVote(type, player) {
           const payload = {
-            voter: { name: voter, token: deviceToken },
-            mom: { player: type === 'mom' ? playerName : "temp", comment: type === 'mom' ? comment : "" },
-            dod: { player: type === 'dod' ? playerName : "temp", comment: type === 'dod' ? comment : "" },
+            voter: { name: playerName, token: deviceToken },
+            mom: { player: type === 'mom' ? player : "temp", comment: "" },
+            dod: { player: type === 'dod' ? player : "temp", comment: "" },
             champagneMoment: { textIfNew: "temp" }
           };
 
@@ -301,9 +408,8 @@
           if (res.ok) {
             if (type === 'mom') setNewMomPlayer("");
             if (type === 'dod') setNewDodPlayer("");
-            setComment("");
             loadResults();
-            setMsg(`Vote cast for ${playerName}!`);
+            setMsg(`Vote cast for ${player}!`);
             setTimeout(() => setMsg(""), 3000);
           }
         }
@@ -348,7 +454,7 @@
                 </div>
               )}
               
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-4 mb-6">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 rounded-full maroon-gradient flex items-center justify-center text-2xl">
@@ -375,27 +481,15 @@
                 </div>
               </div>
 
-              {/* Voter Identification */}
-              {!isMatchClosed && (
-                <div className="mt-8 neon-border rounded-2xl p-6">
-                  <label className="block text-sm font-bold text-white mb-3 flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full animate-pulse" style={{backgroundColor: '#8B1538'}}></span>
-                    Identify Yourself *
-                  </label>
-                  <select
-                    value={voter}
-                    onChange={(e) => setVoter(e.target.value)}
-                    className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white font-medium shadow-2xl focus:outline-none focus:ring-4 transition-all duration-300"
-                    style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
-                    required
-                  >
-                    <option value="">Select your name</option>
-                    {game.teamSheet.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border" style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}>
+                <div>
+                  <p className="text-xs text-slate-400">Voting as</p>
+                  <p className="text-lg font-bold text-white">{playerName}</p>
                 </div>
-              )}
+                <button onClick={onBack} className="text-slate-400 hover:text-white text-sm transition">
+                  Change Match
+                </button>
+              </div>
 
               {msg && (
                 <div className="mt-6 p-4 rounded-xl font-bold text-center border-2" style={{backgroundColor: 'rgba(253, 184, 30, 0.2)', color: '#FDB81E', borderColor: 'rgba(253, 184, 30, 0.4)'}}>
@@ -411,7 +505,6 @@
                 Man of the Match
               </h3>
               
-              {/* Current Nominees */}
               <div className="space-y-4 mb-6">
                 {results?.totals?.mom?.length ? (
                   results.totals.mom.map((m, idx) => {
@@ -423,7 +516,7 @@
                           <span className="font-bold text-white text-lg">{m.player}</span>
                           <button
                             onClick={() => voteForMom(m.player)}
-                            disabled={!voter || isMatchClosed}
+                            disabled={isMatchClosed}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Vote
@@ -443,7 +536,6 @@
                 )}
               </div>
 
-              {/* Add New Nominee */}
               {!isMatchClosed && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
                   <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
@@ -461,7 +553,7 @@
                     </select>
                     <button
                       onClick={addNewMom}
-                      disabled={!voter || !newMomPlayer}
+                      disabled={!newMomPlayer}
                       className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Nominate
@@ -478,7 +570,6 @@
                 Dick of the Day
               </h3>
               
-              {/* Current Nominees */}
               <div className="space-y-4 mb-6">
                 {results?.totals?.dod?.length ? (
                   results.totals.dod.map((d, idx) => {
@@ -490,7 +581,7 @@
                           <span className="font-bold text-white text-lg">{d.player}</span>
                           <button
                             onClick={() => voteForDod(d.player)}
-                            disabled={!voter || isMatchClosed}
+                            disabled={isMatchClosed}
                             className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Vote
@@ -510,7 +601,6 @@
                 )}
               </div>
 
-              {/* Add New Nominee */}
               {!isMatchClosed && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
                   <h4 className="text-lg font-bold text-white mb-4">Nominate New Player</h4>
@@ -528,7 +618,7 @@
                     </select>
                     <button
                       onClick={addNewDod}
-                      disabled={!voter || !newDodPlayer}
+                      disabled={!newDodPlayer}
                       className="vote-button px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Nominate
@@ -545,7 +635,6 @@
                 Champagne Moments
               </h3>
               
-              {/* Current Moments */}
               <div className="space-y-4 mb-6">
                 {results?.champagneMoments?.length ? (
                   results.champagneMoments.map((cm, idx) => {
@@ -560,7 +649,7 @@
                             </span>
                             <button
                               onClick={() => voteForChampagne(cm._id)}
-                              disabled={!voter || isMatchClosed}
+                              disabled={isMatchClosed}
                               className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Vote
@@ -581,7 +670,6 @@
                 )}
               </div>
 
-              {/* Add New Moment */}
               {!isMatchClosed && (
                 <div className="neon-border rounded-xl p-6 bg-slate-800/30">
                   <h4 className="text-lg font-bold text-white mb-4">Add New Champagne Moment</h4>
@@ -597,7 +685,7 @@
                     />
                     <button
                       onClick={addNewChampagne}
-                      disabled={!voter || !newChampagneText.trim()}
+                      disabled={!newChampagneText.trim()}
                       className="vote-button w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add Moment
@@ -611,47 +699,41 @@
       }
 
       function App() {
-        const [game, setGame] = useState(null);
-        const [loading, setLoading] = useState(true);
+        const [selectedPlayer, setSelectedPlayer] = useState(null);
+        const [selectedGame, setSelectedGame] = useState(null);
         const id = qs.get("gameId");
         
+        // Legacy support: if gameId in URL, load that game directly
         useEffect(() => {
           if (id) {
             fetch(`/api/games/${id}`)
               .then((r) => r.json())
-              .then(setGame)
-              .catch(() => {})
-              .finally(() => setLoading(false));
-          } else {
-            setLoading(false);
+              .then((game) => {
+                setSelectedGame(game);
+                // Auto-select first player if available
+                if (game.teamSheet && game.teamSheet.length > 0) {
+                  setSelectedPlayer(game.teamSheet[0]);
+                }
+              })
+              .catch(() => {});
           }
         }, [id]);
 
-        if (loading) {
-          return (
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <div className="club-gradient w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl floating">
-                  🏒
-                </div>
-                <p className="text-white font-bold text-xl">Loading your match...</p>
-              </div>
-            </div>
-          );
+        function handlePlayerSelected(player) {
+          setSelectedPlayer(player);
         }
 
-        if (!game) {
-          return (
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center glass-card p-8">
-                <div className="w-16 h-16 bg-red-500/20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
-                  ⚠️
-                </div>
-                <h1 className="text-2xl font-black text-white mb-3">Match Not Found</h1>
-                <p className="text-white">Please check your link and try again.</p>
-              </div>
-            </div>
-          );
+        function handleGameSelected(game) {
+          setSelectedGame(game);
+        }
+
+        function handleBack() {
+          setSelectedGame(null);
+        }
+
+        function handleBackToPlayer() {
+          setSelectedPlayer(null);
+          setSelectedGame(null);
         }
 
         return (
@@ -666,17 +748,7 @@
             <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 pb-12 pt-8">
               <header className="text-center mb-4">
                 <div className="flex items-center justify-center gap-4 mb-4">
-                  {/* Logo placeholder - add your logo image here */}
-                  <img 
-                    src="/logo.png" 
-                    alt="Guildford Hockey Club" 
-                    className="club-logo"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextElementSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div className="w-16 h-16 club-gradient rounded-full items-center justify-center text-3xl floating" style={{display: 'none'}}>
+                  <div className="w-16 h-16 club-gradient rounded-full flex items-center justify-center text-3xl floating">
                     🏒
                   </div>
                   <div>
@@ -693,7 +765,21 @@
                 </p>
               </header>
               
-              <VotingInterface game={game} />
+              {!selectedPlayer ? (
+                <PlayerSelection onPlayerSelected={handlePlayerSelected} />
+              ) : !selectedGame ? (
+                <GameSelection 
+                  playerName={selectedPlayer} 
+                  onGameSelected={handleGameSelected}
+                  onBack={handleBackToPlayer}
+                />
+              ) : (
+                <VotingInterface 
+                  game={selectedGame} 
+                  playerName={selectedPlayer}
+                  onBack={handleBack}
+                />
+              )}
               
               <footer className="pt-8 text-center">
                 <p className="text-xs text-white font-medium">

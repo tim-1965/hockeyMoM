@@ -206,6 +206,34 @@ app.get("/api/games/:id/results", async (req, res) => {
   });
 });
 
+// Get master player list
+app.get("/api/players", async (req, res) => {
+  try {
+    const games = await Game.find();
+    const allPlayers = new Set();
+    games.forEach(game => {
+      game.teamSheet.forEach(player => allPlayers.add(player));
+    });
+    res.json(Array.from(allPlayers).sort());
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get open games for a specific player
+app.get("/api/games/player/:playerName", async (req, res) => {
+  try {
+    const playerName = decodeURIComponent(req.params.playerName);
+    const games = await Game.find({ 
+      status: "open",
+      teamSheet: playerName 
+    }).sort({ date: -1 });
+    res.json(games);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Admin endpoints - all require authentication
 app.get("/api/admin/games", requireAuth, async (req, res) => {
   try {
