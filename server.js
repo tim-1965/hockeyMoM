@@ -59,6 +59,8 @@ const Vote = mongoose.model(
   })
 );
 
+// ========== API ROUTES - MUST COME BEFORE STATIC FILES ==========
+
 app.get("/api/health", (_, r) => r.json({ ok: true }));
 
 // Admin authentication middleware
@@ -94,6 +96,7 @@ app.get("/api/admin/check", (req, res) => {
   res.json({ isAuthenticated: !!req.session.isAdmin });
 });
 
+// Create game
 app.post("/api/games", async (req, res) => {
   try {
     console.log("Received game creation request:", req.body);
@@ -121,12 +124,14 @@ app.post("/api/games", async (req, res) => {
   }
 });
 
+// Get game by ID
 app.get("/api/games/:id", async (req, res) => {
   const g = await Game.findById(req.params.id);
   if (!g) return res.status(404).json({ error: "Game not found" });
   res.json(g);
 });
 
+// Submit vote
 app.post("/api/games/:id/votes", async (req, res) => {
   try {
     const g = await Game.findById(req.params.id);
@@ -155,6 +160,7 @@ app.post("/api/games/:id/votes", async (req, res) => {
   }
 });
 
+// Get game results
 app.get("/api/games/:id/results", async (req, res) => {
   const g = await Game.findById(req.params.id);
   const votes = await Vote.find({ gameId: g._id });
@@ -188,9 +194,66 @@ app.get("/api/games/:id/results", async (req, res) => {
   });
 });
 
-app.use(express.static(path.join(__dirname, "public")));
-app.get("*", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
-);
+// Admin endpoints - all require authentication
+app.get("/api/admin/games", requireAuth, async (req, res) => {
+  try {
+    const games = await Game.find().sort({ createdAt: -1 });
+    const gamesWithStats = await Promise.all(
+      games.map(async (g) => {
+        const voteCount = await Vote.countDocuments({ gameId: g._id });
+        return {
+          _id: g._id,
+          date: g.date,
+          opponents: g.opponents,
+          teamName: g.teamName,
+          status: g.status,
+          createdAt: g.createdAt,
+          voteCount
+        };
+      })
+    );
+    res.json(gamesWithStats);
+  } catch (error) {
+    console.error("Error loading games:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
-app.listen(process.env.PORT || 8080);
+app.patch("/api/admin/games/:id/close", requireAuth, async (req, res) => {
+  const g = await Game.findByIdAndUpdate(
+    req.params.id,
+    { status: "closed" },
+    { new: true }
+  );
+  if (!g) return res.status(404).json({ error: "Game not found" });
+  res.json(g);
+});
+
+app.patch("/api/admin/games/:id/reopen", requireAuth, async (req, res) => {
+  const g = await Game.findByIdAndUpdate(
+    req.params.id,
+    { status: "open" },
+    { new: true }
+  );
+  if (!g) return res.status(404).json({ error: "Game not found" });
+  res.json(g);
+});
+
+app.delete("/api/admin/games/:id", requireAuth, async (req, res) => {
+  await Vote.deleteMany({ gameId: req.params.id });
+  await Game.findByIdAndDelete(req.params.id);
+  res.json({ success: true });
+});
+
+// ========== STATIC FILES & CATCH-ALL - MUST COME LAST ==========
+app.use(express.static(path.join(__dirname, "public")));
+
+// Catch-all route - only for non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
