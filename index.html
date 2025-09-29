@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guildford Hockey Club - Match Voting</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --maroon: #8B1538;
+        --gold: #FDB81E;
+        --navy: #1e3a5f;
+      }
+      
+      body {
+        -webkit-tap-highlight-color: transparent;
+        font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, #0f0a1f 0%, #1a0f2e 25%, #2d1b69 50%, #1a0f2e 75%, #0f0a1f 100%);
+        min-height: 100vh;
+        color: white !important;
+      }
+      
+      * {
+        color: inherit;
+      }
+      
+      input, select, textarea {
+        color: white !important;
+        -webkit-user-select: text !important;
+        user-select: text !important;
+        background-color: rgba(15, 23, 42, 0.9) !important;
+      }
+      
+      option {
+        color: black !important;
+        background-color: white !important;
+      }
+      
+      select {
+        color: black !important;
+        background-color: white !important;
+      }
+      
+      input::placeholder, textarea::placeholder {
+        color: #64748b !important;
+      }
+      
+      input[type="date"] {
+        color: black !important;
+        background-color: white !important;
+      }
+      
+      .glass-card {
+        background: linear-gradient(135deg, rgba(139, 21, 56, 0.15) 0%, rgba(30, 58, 95, 0.15) 100%);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(253, 184, 30, 0.2);
+        border-radius: 1.5rem;
+        box-shadow: 
+          0 20px 60px rgba(139, 21, 56, 0.3),
+          0 0 0 1px rgba(253, 184, 30, 0.1),
+          inset 0 1px 0 rgba(253, 184, 30, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(253, 184, 30, 0.6), transparent);
+      }
+      
+      .maroon-gradient {
+        background: linear-gradient(135deg, #8B1538 0%, #a91d47 100%);
+      }
+      
+      .gold-gradient {
+        background: linear-gradient(135deg, #FDB81E 0%, #ffd700 100%);
+      }
+      
+      .club-gradient {
+        background: linear-gradient(135deg, #8B1538 0%, #FDB81E 50%, #1e3a5f 100%);
+      }
+      
+      .floating {
+        animation: float 6s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      
+      .hover-lift {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 25px 80px rgba(139, 21, 56, 0.5);
+      }
+      
+      .gradient-text {
+        background: linear-gradient(135deg, #FDB81E 0%, #ffd700 50%, #FDB81E 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .result-bar {
+        background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .result-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(253, 184, 30, 0.4), transparent);
+        animation: shine 2s infinite;
+      }
+      
+      @keyframes shine {
+        0% { left: -100%; }
+        100% { left: 100%; }
+      }
+      
+      .neon-border {
+        position: relative;
+        border: 2px solid transparent;
+        background: linear-gradient(135deg, rgba(139, 21, 56, 0.9), rgba(30, 58, 95, 0.9)) padding-box,
+                    linear-gradient(135deg, #8B1538, #FDB81E, #1e3a5f) border-box;
+      }
+      
+      .magical-hover {
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .magical-hover::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(253, 184, 30, 0.2), transparent);
+        transition: left 0.5s;
+      }
+      
+      .magical-hover:hover::before {
+        left: 100%;
+      }
+      
+      .vote-button {
+        background: linear-gradient(135deg, #8B1538, #a91d47);
+        border: 2px solid #FDB81E;
+        transition: all 0.3s ease;
+      }
+      
+      .vote-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #a91d47, #8B1538);
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(253, 184, 30, 0.4);
+      }
+      
+      .comment-bubble {
+        background: rgba(15, 23, 42, 0.6);
+        border-left: 3px solid rgba(253, 184, 30, 0.5);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-white">
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useEffect, useState, useRef } = React;
+      const qs = new URLSearchParams(location.search);
+      const tokenKey = "hockey_vote_token";
+      
+      function getToken() {
+        let t = localStorage.getItem(tokenKey);
+        if (!t) {
+          t = crypto.randomUUID();
+          localStorage.setItem(tokenKey, t);
+        }
+        return t;
+      }
+      const deviceToken = getToken();
+
+      function PlayerSelection({ onPlayerSelected }) {
+        const [players, setPlayers] = useState([]);
+        const [selectedPlayer, setSelectedPlayer] = useState("");
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          fetch("/api/players")
+            .then((r) => r.json())
+            .then(setPlayers)
+            .catch(() => {})
+            .finally(() => setLoading(false));
+        }, []);
+
+        function handleSubmit() {
+          if (selectedPlayer) {
+            onPlayerSelected(selectedPlayer);
+          }
+        }
+
+        if (loading) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="club-gradient w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <p className="text-white font-medium">Loading players...</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="glass-card p-8 hover-lift">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 club-gradient rounded-full mx-auto mb-4 flex items-center justify-center text-3xl">
+                🏑
+              </div>
+              <h2 className="text-3xl font-black gradient-text mb-2">Who are you?</h2>
+              <p className="text-white">Select your name to view your available matches</p>
+            </div>
+
+            <div className="space-y-6">
+              <select
+                value={selectedPlayer}
+                onChange={(e) => setSelectedPlayer(e.target.value)}
+                className="w-full rounded-xl border-2 p-4 font-medium text-lg focus:outline-none focus:ring-4 focus:ring-yellow-500/50"
+                style={{borderColor: 'rgba(253, 184, 30, 0.3)', backgroundColor: 'white', color: 'black'}}
+              >
+                <option value="">Select your name</option>
+                {players.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleSubmit}
+                disabled={!selectedPlayer}
+                className="vote-button w-full py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      function GameSelection({ playerName, onGameSelected, onBack }) {
+        const [games, setGames] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          fetch(`/api/games/player/${encodeURIComponent(playerName)}`)
+            .then((r) => r.json())
+            .then(setGames)
+            .catch(() => {})
+            .finally(() => setLoading(false));
+        }, [playerName]);
+
+        if (loading) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="club-gradient w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <p className="text-white font-medium">Loading your matches...</p>
+            </div>
+          );
+        }
+
+        if (games.length === 0) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚠️
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">No Available Matches</h3>
+              <p className="text-slate-400 mb-6">There are no open matches for {playerName}</p>
+              <button onClick={onBack} className="vote-button px-6 py-3 rounded-xl text-white font-bold">
+                Back to Player Selection
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-6">
+            <div className="glass-card p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm" style={{color: '#FDB81E'}}>Logged in as</p>
+                  <h3 className="text-xl font-bold text-white">{playerName}</h3>
+                </div>
+                <button onClick={onBack} className="text-slate-400 hover:text-white transition">
+                  Change Player
+                </button>
+              </div>
+            </div>
+
+            <div className="glass-card p-8 hover-lift">
+              <h2 className="text-2xl font-black gradient-text mb-6">Select a Match to Vote</h2>
+              <div className="space-y-3">
+                {games.map((game) => (
+                  <button
+                    key={game._id}
+                    onClick={() => onGameSelected(game)}
+                    className="w-full text-left p-4 rounded-xl border-2 bg-slate-900/50 hover:bg-slate-800/70 transition magical-hover"
+                    style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-lg font-bold text-white">{game.teamName} vs {game.opponents}</h4>
+                        <p className="text-sm text-slate-400">{game.date}</p>
+                      </div>
+                      <span className="text-2xl">▶</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function VotingInterface({ game, playerName, onBack }) {
+        const [newMomPlayer, setNewMomPlayer] = useState("");
+        const [momComment, setMomComment] = useState("");
+        const [newDodPlayer, setNewDodPlayer] = useState("");
+        const [dodComment, setDodComment] = useState("");
+        const [newChampagneText, setNewChampagneText] = useState("");
+        const [champagneComment, setChampagneComment] = useState("");
+        const [msg, setMsg] = useState("");
+        const [results, setResults] = useState(null);
+        const messageTimeoutRef = useRef(null);
+
+        const isMatchClosed = game.status === "closed";
+
+        useEffect(() => {
+          loadResults();
+        }, [game._id]);
+
+        const loadResults = () => {
+          fetch(`/api/games/${game._id}/results?token=${deviceToken}`)
+            .then((r) => r.json())
+            .then(setResults)
+            .catch(() => {});
+        };
+
+           useEffect(() => {
+          if (!results?.userVotes) return;
+
+          const momVote = results.userVotes.mom;
+          setNewMomPlayer(momVote?.player || "");
+          setMomComment(momVote?.comment || "");
+
+          const dodVote = results.userVotes.dod;
+          setNewDodPlayer(dodVote?.player || "");
+          setDodComment(dodVote?.comment || "");
+
+          const champagneVote = results.userVotes.champagne;
+          setChampagneComment(champagneVote?.comment || "");
+        }, [results?.userVotes]);
+
+        const momVote = results?.userVotes?.mom;
+        const dodVote = results?.userVotes?.dod;
+        const champagneVote = results?.userVotes?.champagne;
+
+        const hasVotedMom = !!momVote?.player;
+        const hasVotedDod = !!dodVote?.player;
+        const hasVotedChampagne = !!champagneVote?.eventId;
+        const teamSheet = Array.isArray(game?.teamSheet) ? game.teamSheet : [];
+        const availableForMom = teamSheet.filter(p => p !== playerName);
+        const availableForDod = teamSheet.filter(p => p !== playerName);
+
+         const resetMessage = () => {
+          if (messageTimeoutRef.current) {
+            clearTimeout(messageTimeoutRef.current);
+          }
+          messageTimeoutRef.current = setTimeout(() => {
+            setMsg("");
+            messageTimeoutRef.current = null;
+          }, 3000);
+        };
+
+        useEffect(() => () => {
+          if (messageTimeoutRef.current) {
+            clearTimeout(messageTimeoutRef.current);
+          }
+        }, []);
+
+        async function submitVote(voteData, successText) {
+          try {
+            const payload = {
+              voter: { name: playerName, token: deviceToken },
+              ...voteData,
+            };
+
+            const res = await fetch(`/api/games/${game._id}/votes`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || "Failed to submit vote");
+            }
+
+            await res.json().catch(() => ({}));
+            setMsg(successText);
+            resetMessage();
+            loadResults();
+            return true;
+          } catch (error) {
+            setMsg(error.message || "Failed to submit vote");
+            resetMessage();
+            return false;
+          }
+        }
+
+        async function voteForMom(player, comment = "") {
+          const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+          const previousVote = results?.userVotes?.mom?.player;
+          const success = await submitVote(
+            { mom: { player, comment: trimmedComment } },
+            previousVote ? `Vote updated for ${player}!` : `Vote cast for ${player}!`
+          );
+
+          if (success) {
+            setNewMomPlayer(player);
+            setMomComment(trimmedComment);
+          }
+        }
+
+        async function voteForDod(player, comment = "") {
+          const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+          const previousVote = results?.userVotes?.dod?.player;
+          const success = await submitVote(
+            { dod: { player, comment: trimmedComment } },
+            previousVote ? `Vote updated for ${player}!` : `Vote cast for ${player}!`
+          );
+
+          if (success) {
+            setNewDodPlayer(player);
+            setDodComment(trimmedComment);
+          }
+        }
+
+         async function voteForChampagne({ eventId = null, newText = null, comment = "" }) {
+          const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+          const payload = {};
+
+          if (newText) {
+            payload.champagneMoment = { textIfNew: newText, comment: trimmedComment };
+          } else if (eventId) {
+            payload.champagneMoment = { eventId, comment: trimmedComment };
+          } else {
+             return;
+          }
+
+          const previousVote = results?.userVotes?.champagne?.eventId;
+          const success = await submitVote(
+            payload,
+            previousVote ? "Champagne vote updated!" : "Champagne vote cast!"
+          );
+
+          if (success) {
+            setNewChampagneText("");
+            setChampagneComment(trimmedComment);
+          }
+        }
+
+        const addNewMom = () => {
+          if (newMomPlayer) {
+            voteForMom(newMomPlayer, momComment);
+          }
+        };
+
+        const addNewDod = () => {
+          if (newDodPlayer) {
+            voteForDod(newDodPlayer, dodComment);
+          }
+        };
+
+        const addNewChampagne = () => {
+           const trimmed = newChampagneText.trim();
+          if (trimmed) {
+            voteForChampagne({ newText: trimmed, comment: champagneComment });
+          }
+        };
+
+        if (!results) {
+          return (
+            <div className="glass-card p-8 text-center">
+              <div className="club-gradient w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <p className="text-white font-medium">Loading match data...</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="glass-card p-8 hover-lift">
+              {isMatchClosed && (
+                <div className="mb-6 p-4 rounded-xl bg-red-500/20 border-2 border-red-500/40 text-center">
+                  <p className="text-red-300 font-bold text-lg">This Match is Closed</p>
+                  <p className="text-red-200 text-sm mt-1">Voting has ended. View the final results below.</p>
+                </div>
+              )}
+              
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-full maroon-gradient flex items-center justify-center text-2xl">
+                      🏑
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] font-bold" style={{color: '#FDB81E'}}>
+                        {isMatchClosed ? "Final Results" : "Live Voting"}
+                      </p>
+                      <h2 className="text-3xl font-black leading-tight gradient-text">
+                        {game.teamName || "Hockey Team"}
+                      </h2>
+                    </div>
+                  </div>
+                  <p className="text-white flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full animate-pulse" style={{backgroundColor: '#FDB81E'}}></span>
+                    {game.date} vs {game.opponents}
+                  </p>
+                </div>
+                <div className="neon-border rounded-full px-4 py-2">
+                  <span className="text-xs font-bold" style={{color: '#FDB81E'}}>
+                    {isMatchClosed ? "Closed" : "Secure"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border" style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}>
+                <div>
+                  <p className="text-xs text-slate-400">Voting as</p>
+                  <p className="text-lg font-bold text-white">{playerName}</p>
+                </div>
+                <button onClick={onBack} className="text-slate-400 hover:text-white text-sm transition">
+                  Change Match
+                </button>
+              </div>
+
+              {msg && (
+                <div className="mt-6 p-4 rounded-xl font-bold text-center border-2" style={{backgroundColor: 'rgba(253, 184, 30, 0.2)', color: '#FDB81E', borderColor: 'rgba(253, 184, 30, 0.4)'}}>
+                  {msg}
+                </div>
+              )}
+            </div>
+
+            {/* Man of the Match */}
+            <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(139, 21, 56, 0.3)'}}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{color: '#FDB81E'}}>
+                  <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">👑</span>
+                  Man of the Match
+                </h3>
+                {hasVotedMom && !isMatchClosed && (
+                  <span className="text-sm font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                    ✓ Voted
+                  </span>
+                )}
+              </div>
+              
+               {hasVotedMom && (
+                <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-sm text-green-200">
+                    You voted for <span className="font-semibold text-green-100">{momVote.player}</span>
+                    {momVote.comment ? (
+                      <span className="italic"> — "{momVote.comment}"</span>
+                    ) : '.'}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-6">
+                {results?.totals?.mom?.length ? (
+                  results.totals.mom.map((m, idx) => {
+                    const highest = Math.max(1, ...results.totals.mom.map(t => t.count));
+                    const percentage = (m.count / highest) * 100;
+                    const isUserChoice = momVote?.player === m.player;
+                    return (
+                      <div key={m.player + idx} className="neon-border rounded-xl overflow-hidden">
+                        <div className="flex items-center justify-between p-4 bg-slate-900/60">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="font-bold text-white text-lg">{m.player}</span>
+                              <span className="text-sm" style={{color: '#FDB81E'}}>({m.count} vote{m.count !== 1 ? 's' : ''})</span>
+                              {isUserChoice && (
+                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/40">
+                                  Your vote
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => voteForMom(m.player, momComment)}
+                            disabled={isMatchClosed}
+                            className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isUserChoice ? 'Update Vote' : 'Vote'}
+                          </button>
+                        </div>
+                        <div className="h-3 bg-slate-800 relative overflow-hidden">
+                          <div
+                            className="h-full result-bar"
+                            style={{ width: `${Math.max(percentage, 10)}%`, color: '#FDB81E' }}
+                          ></div>
+                        </div>
+                        {m.comments && m.comments.length > 0 && (
+                          <div className="p-4 bg-slate-900/30 space-y-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments:</p>
+                            {m.comments.map((comment, cidx) => (
+                              <div key={cidx} className="comment-bubble">
+                                <p className="text-sm text-white italic">"{comment}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-white text-center py-8 font-medium">No nominees yet - be the first!</p>
+                )}
+              </div>
+
+              {!isMatchClosed && (
+                <div className="neon-border rounded-xl p-6 bg-slate-800/30">
+                      <h4 className="text-lg font-bold text-white mb-2">
+                    {hasVotedMom ? 'Update Your Vote' : 'Nominate New Player'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Choose a teammate and optionally add a comment to explain your pick.
+                  </p>
+                  <div className="space-y-3">
+                    <select
+                      value={newMomPlayer}
+                      onChange={(e) => setNewMomPlayer(e.target.value)}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                    >
+                      <option value="">Select player to nominate</option>
+                      {availableForMom.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <textarea
+                      placeholder="Add an optional comment..."
+                      value={momComment}
+                      onChange={(e) => setMomComment(e.target.value)}
+                      maxLength={200}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                      rows={2}
+                    />
+                    <button
+                      onClick={addNewMom}
+                      disabled={!newMomPlayer}
+                      className="vote-button w-full px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {hasVotedMom ? 'Update Vote' : 'Submit Vote'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* DoD */}
+            <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(139, 21, 56, 0.3)'}}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{color: '#FDB81E'}}>
+                  <span className="w-10 h-10 maroon-gradient rounded-full flex items-center justify-center text-xl">💩</span>
+                  DoD
+                </h3>
+                {hasVotedDod && !isMatchClosed && (
+                  <span className="text-sm font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                    ✓ Voted
+                  </span>
+                )}
+              </div>
+              
+               {hasVotedDod && (
+                <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-sm text-green-200">
+                    You voted for <span className="font-semibold text-green-100">{dodVote.player}</span>
+                    {dodVote.comment ? (
+                      <span className="italic"> — "{dodVote.comment}"</span>
+                    ) : '.'}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-6">
+                {results?.totals?.dod?.length ? (
+                  results.totals.dod.map((d, idx) => {
+                    const highest = Math.max(1, ...results.totals.dod.map(t => t.count));
+                    const percentage = (d.count / highest) * 100;
+                    const isUserChoice = dodVote?.player === d.player;
+                    return (
+                      <div key={d.player + idx} className="neon-border rounded-xl overflow-hidden">
+                        <div className="flex items-center justify-between p-4 bg-slate-900/60">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="font-bold text-white text-lg">{d.player}</span>
+                              <span className="text-sm" style={{color: '#FDB81E'}}>({d.count} vote{d.count !== 1 ? 's' : ''})</span>
+                              {isUserChoice && (
+                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/40">
+                                  Your vote
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => voteForDod(d.player, dodComment)}
+                            disabled={isMatchClosed}
+                            className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                          {isUserChoice ? 'Update Vote' : 'Vote'}
+                          </button>
+                        </div>
+                        <div className="h-3 bg-slate-800 relative overflow-hidden">
+                          <div
+                            className="h-full result-bar"
+                            style={{ width: `${Math.max(percentage, 10)}%`, color: '#8B1538' }}
+                          ></div>
+                        </div>
+                        {d.comments && d.comments.length > 0 && (
+                          <div className="p-4 bg-slate-900/30 space-y-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments:</p>
+                            {d.comments.map((comment, cidx) => (
+                              <div key={cidx} className="comment-bubble">
+                                <p className="text-sm text-white italic">"{comment}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-white text-center py-8 font-medium">No nominations yet!</p>
+                )}
+              </div>
+
+              {!isMatchClosed && (
+                <div className="neon-border rounded-xl p-6 bg-slate-800/30">
+                  <h4 className="text-lg font-bold text-white mb-2">
+                    {hasVotedDod ? 'Update Your Vote' : 'Nominate New Player'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Pick a teammate and share why they earned the DoD nod (optional).
+                  </p>
+                  <div className="space-y-3">
+                    <select
+                      value={newDodPlayer}
+                      onChange={(e) => setNewDodPlayer(e.target.value)}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white font-medium"
+                      style={{borderColor: 'rgba(139, 21, 56, 0.6)'}}
+                    >
+                      <option value="">Select player to nominate</option>
+                      {availableForDod.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <textarea
+                      placeholder="Add an optional comment..."
+                      value={dodComment}
+                      onChange={(e) => setDodComment(e.target.value)}
+                      maxLength={200}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(139, 21, 56, 0.6)'}}
+                      rows={2}
+                    />
+                    <button
+                      onClick={addNewDod}
+                      disabled={!newDodPlayer}
+                      className="vote-button w-full px-6 py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                    {hasVotedDod ? 'Update Vote' : 'Submit Vote'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Champagne Moments */}
+            <div className="glass-card p-8 hover-lift" style={{borderColor: 'rgba(253, 184, 30, 0.3)'}}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{color: '#FDB81E'}}>
+                  <span className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center text-xl floating">🥂</span>
+                  Champagne Moments
+                </h3>
+                {hasVotedChampagne && !isMatchClosed && (
+                  <span className="text-sm font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40">
+                    ✓ Voted
+                  </span>
+                )}
+              </div>
+              
+              {hasVotedChampagne && (
+                <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-sm text-green-200">
+                    You voted for <span className="font-semibold text-green-100">{champagneVote.text || 'this moment'}</span>
+                    {champagneVote.comment ? (
+                      <span className="italic"> — "{champagneVote.comment}"</span>
+                    ) : '.'}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-6">
+                {results?.champagneMoments?.length ? (
+                  results.champagneMoments.map((cm, idx) => {
+                    const highest = Math.max(1, ...results.champagneMoments.map(c => c.votes));
+                    const percentage = (cm.votes / highest) * 100;
+                    const eventId = cm._id?.toString?.() ? cm._id.toString() : cm._id || `${idx}`;
+                    const isUserSelection = champagneVote?.eventId === eventId;
+                    return (
+                           <div key={eventId} className="neon-border rounded-xl overflow-hidden">
+                        <div className="p-5 bg-slate-900/60">
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <div className="flex-1">
+                              <span className="text-white font-medium leading-relaxed block">
+                                {cm.text}
+                              </span>
+                              <span className="text-sm mt-1 inline-block" style={{color: '#FDB81E'}}>({cm.votes} vote{cm.votes !== 1 ? 's' : ''})</span>
+                            {isUserSelection && (
+                                <span className="ml-0 mt-2 inline-block text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/40">
+                                  Your vote
+                                </span>
+                              )}
+                              </div>
+                            <button
+                             onClick={() => {
+                                voteForChampagne({ eventId, comment: champagneComment });
+                              }}
+                              disabled={isMatchClosed} className="vote-button px-4 py-2 rounded-lg text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                         {isUserSelection ? 'Update Vote' : 'Vote'}
+                            </button>
+                          </div>
+                          <div className="h-3 bg-slate-800 rounded-full relative overflow-hidden">
+                            <div
+                              className="h-full result-bar rounded-full"
+                              style={{ width: `${Math.max(percentage, 10)}%`, color: '#FDB81E' }}
+                            ></div>
+                          </div>
+                          {cm.comments && cm.comments.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments:</p>
+                              {cm.comments.map((comment, cidx) => (
+                                <div key={cidx} className="comment-bubble">
+                                  <p className="text-sm text-white italic">"{comment}"</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-white text-center py-8 font-medium">No magical moments captured yet!</p>
+                )}
+              </div>
+
+              {!isMatchClosed && (
+                <div className="neon-border rounded-xl p-6 bg-slate-800/30">
+                  <h4 className="text-lg font-bold text-white mb-2">
+                    {hasVotedChampagne ? 'Share Another Magical Moment' : 'Add New Champagne Moment'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Add a new nomination below or update your comment before voting for an existing moment.
+                  </p>
+                  <div className="space-y-3">
+                    <textarea
+                      placeholder="Describe the magical moment (up to 100 characters)"
+                      value={newChampagneText}
+                      onChange={(e) => setNewChampagneText(e.target.value)}
+                      maxLength={100}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-4 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                      rows={2}
+                    />
+                    <textarea
+                      placeholder="Add an optional comment (saved with your next vote)..."
+                      value={champagneComment}
+                      onChange={(e) => setChampagneComment(e.target.value)}
+                      maxLength={200}
+                      className="w-full rounded-xl border-2 bg-slate-900/90 p-3 text-white placeholder-slate-400 font-medium"
+                      style={{borderColor: 'rgba(253, 184, 30, 0.6)'}}
+                      rows={2}
+                    />
+                    <button
+                      onClick={addNewChampagne}
+                      disabled={!newChampagneText.trim()}
+                      className="vote-button w-full py-3 rounded-xl text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {hasVotedChampagne ? 'Share Moment & Vote' : 'Submit Vote'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      function App() {
+        const [selectedPlayer, setSelectedPlayer] = useState(null);
+        const [selectedGame, setSelectedGame] = useState(null);
+        const id = qs.get("gameId");
+        
+        useEffect(() => {
+          if (id) {
+            fetch(`/api/games/${id}`)
+              .then((r) => r.json())
+              .then((game) => {
+                setSelectedGame(game);
+                if (game.teamSheet && game.teamSheet.length > 0) {
+                  setSelectedPlayer(game.teamSheet[0]);
+                }
+              })
+              .catch(() => {});
+          }
+        }, [id]);
+
+        function handlePlayerSelected(player) {
+          setSelectedPlayer(player);
+        }
+
+        function handleGameSelected(game) {
+          setSelectedGame(game);
+        }
+
+        function handleBack() {
+          setSelectedGame(null);
+        }
+
+        function handleBackToPlayer() {
+          setSelectedPlayer(null);
+          setSelectedGame(null);
+        }
+
+        return (
+          <div className="relative min-h-screen overflow-hidden">
+            <div className="fixed inset-0 pointer-events-none">
+              <div className="absolute top-[-20%] left-[-20%] w-96 h-96 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(139,21,56,0.3) 0%, transparent 70%)'}}></div>
+              <div className="absolute bottom-[-20%] right-[-20%] w-96 h-96 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(30,58,95,0.3) 0%, transparent 70%)', animationDelay: '-3s'}}></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-3xl floating" style={{background: 'radial-gradient(circle, rgba(253,184,30,0.2) 0%, transparent 70%)', animationDelay: '-1.5s'}}></div>
+            </div>
+            
+            <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 pb-12 pt-8">
+              <header className="text-center mb-4">
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <div className="w-16 h-16 club-gradient rounded-full flex items-center justify-center text-3xl floating">
+                    🏑
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.4em] font-bold" style={{color: '#FDB81E'}}>
+                      Guildford Hockey Club
+                    </p>
+                    <h1 className="text-5xl font-black gradient-text leading-tight">
+                      Match Voting
+                    </h1>
+                  </div>
+                </div>
+                <p className="text-lg text-white font-medium">
+                  Vote and see live results for MoM, DoD, and Champagne Moments
+                </p>
+              </header>
+              
+              {!selectedPlayer ? (
+                <PlayerSelection onPlayerSelected={handlePlayerSelected} />
+              ) : !selectedGame ? (
+                <GameSelection 
+                  playerName={selectedPlayer} 
+                  onGameSelected={handleGameSelected}
+                  onBack={handleBackToPlayer}
+                />
+              ) : (
+                <VotingInterface 
+                  game={selectedGame} 
+                  playerName={selectedPlayer}
+                  onBack={handleBack}
+                />
+              )}
+              
+              <footer className="pt-8 text-center">
+                <p className="text-xs text-white font-medium">
+                  Guildford Hockey Club - #teamwork #passion #creativity #respect
+                </p>
+              </footer>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
