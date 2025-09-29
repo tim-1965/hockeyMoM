@@ -5,7 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import session from "express-session";
+import expressSession from "express-session";
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -14,15 +14,19 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(morgan("tiny"));
-app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
+app.use(cors({ 
+  origin: process.env.CORS_ORIGIN || true,
+  credentials: true 
+}));
 
 // Session middleware for admin authentication
-app.use(session({
+app.use(expressSession({
   secret: process.env.SESSION_SECRET || 'hockey-voting-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
